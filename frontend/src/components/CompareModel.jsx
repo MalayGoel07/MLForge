@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api/api";
+import ThemeButton from "./ThemeButton";
 
 const METRIC_SETS = {
     classification: ["Accuracy", "Precision", "Recall", "F1 score"],
@@ -16,7 +17,7 @@ const SCALING_OPTIONS = [
     { value: "none", label: "No scaling", description: "Use the original feature ranges" },
 ];
 
-export default function CompareModel({ onNavigate }) {
+export default function CompareModel({ onNavigate, theme = "forest", onSelectTheme }) {
     const fileInputRef = useRef(null);
     const [fileName, setFileName] = useState("");
     const [file, setFile] = useState(null);
@@ -119,16 +120,19 @@ export default function CompareModel({ onNavigate }) {
     const cardValues = { "Best score": bestScore, "Best model": bestModel, "Failed runs": failedRuns, "Test samples": testSamples };
 
     return (
-        <div className="h-screen overflow-x-hidden overflow-y-auto bg-[#292929] px-4 py-4 font-mono text-white scrollbar-thin scrollbar-thumb-[#7aa88a] md:px-8">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <section className="mx-auto max-w-7xl">
-                <header className="mb-4 border-b border-[#243724] pb-5">
-                    <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#adc9ae]">WorkShop-X</p>
+                <header className="t-card-line mb-4 border-b pb-5">
+                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X</p>
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Compare Models</h1>
+                            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Compare Models</h1>
                             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">Evaluate candidate models side by side and find the strongest fit for your dataset.</p>
                         </div>
-                        <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                        <div className="flex items-center gap-2">
+                            <ThemeButton theme={theme} onSelect={onSelectTheme} />
+                            <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                        </div>
                     </div>
                 </header>
 
@@ -145,7 +149,7 @@ export default function CompareModel({ onNavigate }) {
                             ))}
                         </div>
 
-                        <div className="max-h-58 space-y-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-[#7aa88a] scrollbar-track-[#101a10]">
+                        <div className="green-thin-scroll max-h-58 space-y-2 overflow-y-auto pr-2">
                             {visibleModels.map(({ name, description }) => {
                                 const selected = selectedModels.includes(name);
                                 return (

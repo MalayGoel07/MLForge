@@ -1,25 +1,24 @@
-import FloatingWords from "./FloatingWords";
+import ThemeButton from "./ThemeButton";
 
-export default function HomePage({ onNavigate }) {
+export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }) {
   const navigate = (route) => {
     if (typeof onNavigate === "function") {onNavigate(route);}
     else {
-      console.warn( "[HomePage] onNavigate prop missing or not a function — falling back to window.location");
+      console.warn( "HomePage] onNavigate prop missing or not a function — falling back to window.location");
       window.location.href = route;
     }
   };
 
   return (
-    <div className="bg-[#0e140e] min-h-screen px-4 py-8 font-sans text-white overflow-y-auto scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
-      <FloatingWords/>
+    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-8 font-sans scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
       <div className="mx-auto flex max-w-6xl flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div>
-            <h1 className="text-3xl font-bold text-[#adc9ae]">MLForge</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="t-accent text-3xl font-bold">MLForge</h1>
+              <ThemeButton theme={theme} onSelect={onSelectTheme} />
+            </div>
             <p className="mt-1 text-sm text-gray-500">Test, analyze and experiment on dataset, models, and more.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button class="no-underline rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-2 text-sm text-green-300 transition hover:bg-green-500/20">Profile</button>
           </div>
         </header>
       </div>
@@ -27,13 +26,13 @@ export default function HomePage({ onNavigate }) {
       <section className="grid flex-1 items-center gap-6 py-10 lg:grid-cols-[1fr_380px] max-w-6xl mx-auto">
             <div>
               <div className="flex flex-row items-center p-2 gap-4">
-                <p className="text-xs uppercase tracking-[0.35em] text-[#adc9ae]">ML Workspace</p>
-                <div className="inline-flex items-center gap-2 bg-[#0e140e] border border-[#243724] rounded-full px-4 py-1.5 text-xs text-[#b6dbb7]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#adc9ae] animate-pulse inline-block"></span>
+                <p className="t-accent text-xs uppercase tracking-[0.35em]">ML Workspace</p>
+                <div className="t-pill inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs">
+                  <span className="t-dot w-1.5 h-1.5 rounded-full animate-pulse inline-block"></span>
                   Multi-model ML WorkShop
                 </div>
               </div>
-                <h2 className="mt-4 max-w-3xl text-4xl font-bold leading-tight text-white md:text-6xl">Machine learning, <br></br>all organized in <br></br>one place.</h2>
+                <h2 className="mt-4 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">Machine learning, <br></br>all organized in <br></br>one place.</h2>
                 <p className="mt-5 max-w-2xl text-base leading-6 text-gray-400">Jump into the tools you use most, and keep the day moving without digging through menus.</p>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   <button onClick={()=> navigate("/compare")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-green-400/40 hover:bg-green-500/10 hover:text-green-300">Model tester</button>
@@ -44,9 +43,9 @@ export default function HomePage({ onNavigate }) {
             </div>
 
             <aside className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-black/40 backdrop-blur-lg">
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-[#adc9ae] to-transparent"></div>
+                <div className="t-rule h-px w-full"></div>
                 <div className="pt-6">
-                  <h3 className="text-xl font-bold text-[#adc9ae]">Quick Actions</h3>
+                  <h3 className="t-accent text-xl font-bold">Quick Actions</h3>
                   <div className="mt-5 grid gap-3">
                     <button className="rounded-xl border border-white/10 bg-black/30 p-4 no-underline transition hover:border-cyan-400/40 hover:bg-cyan-500/10">
                         <span className="block text-base font-semibold text-white">Ai HelperBot</span>
@@ -60,11 +59,6 @@ export default function HomePage({ onNavigate }) {
                 </div>
             </aside>
         </section> 
-
-      <footer className="border-t border-[#172617] px-8 py-6 flex items-center justify-between text-sm text-gray-600 backdrop-blur-sm z-50 max-w-6xl mx-auto">
-        <span><span className="text-[#adc9ae]">WorkShop</span><span className="text-[#adc9ae]">-X</span><span> : </span><span>Multi-model ML visualization system</span></span>
-        <span>Multi-model | ML</span>
-      </footer>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import ThemeButton from "./ThemeButton";
+
 const models = [
   { role: "Linear Regression", model: "Regression" },
   { role: "Logistic Regression", model: "Classification" },
@@ -19,7 +21,7 @@ const placementRows = Array.from({ length: 100 }, (_, index) => {
   const placementPossibility = Math.min(98,Math.max(24, Math.round(Number(cgpa) * 8 + (iq - 90) * 0.7)));
   return { serialNo, cgpa, iq, placementPossibility: `${placementPossibility}%`,};});
 
-export default function CBXLanding({ onNavigate }) {
+export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme }) {
   const openWorkspace = () => {
     if (onNavigate) {
       onNavigate("/home");
@@ -30,18 +32,21 @@ export default function CBXLanding({ onNavigate }) {
   };
 
   return (
-    <div className="h-screen bg-[#292929] text-white font-sans pt-14 overflow-y-auto scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">      
-      <nav className="fixed top-0 left-0 w-full flex items-center justify-between px-6 py-4 border-b border-[#172617] bg-[#0e140e]/80 backdrop-blur-md z-50">        
+    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none text-white font-sans pt-14 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">      
+      <nav className="t-nav fixed top-0 left-0 w-full flex items-center justify-between px-6 py-4 border-b backdrop-blur-md z-50">        
         <span className="text-xl font-bold tracking-tight">
-          <span className="text-[#adc9ae]">WorkShop</span>
-          <span className="text-[#adc9ae]">-X</span>
+          <span className="t-accent">WorkShop</span>
+          <span className="t-accent">-X</span>
         </span>
         <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#models" className="hover:text-white transition-colors">Models</a>
           <a href="#demo" className="hover:text-white transition-colors">Demo</a>
         </div>
-        <button onClick={openWorkspace} className="bg-[#7aa88a] hover:bg-[#618c61] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
+        <div className="flex items-center gap-3">
+          <ThemeButton theme={theme} onSelect={onSelectTheme} />
+          <button onClick={openWorkspace} className="t-btn bg-[#7aa88a] hover:bg-[#618c61] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
+        </div>
       </nav>
 
       <section className="max-w-5xl mx-auto pt-6 pb-6 text-center backdrop-blur-sm z-50">
@@ -111,7 +116,6 @@ export default function CBXLanding({ onNavigate }) {
 
             <div className="flex items-center justify-between text-xs text-gray-600 px-1">
               <span>Machine Learning Visuals</span>
-              <span>Powered by Sklearn</span>
             </div>
           </div>
         </div>

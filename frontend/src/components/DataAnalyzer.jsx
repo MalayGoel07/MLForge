@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import api from "../api/api";
+import ThemeButton from "./ThemeButton";
 
-export default function DataAnalyzer({ onNavigate }) {
+export default function DataAnalyzer({ onNavigate, theme = "forest", onSelectTheme }) {
     const fileInputRef = useRef(null);
     const [fileName, setFileName] = useState("");
     const [file, setFile] = useState(null);
@@ -34,16 +35,19 @@ export default function DataAnalyzer({ onNavigate }) {
     };
 
     return (
-        <div className="h-screen overflow-x-hidden bg-[#292929] px-4 py-4 font-mono text-white md:px-8 overflow-y-auto scrollbar-thin scrollbar-thumb-[#7aa88a]">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <section className="mx-auto max-w-5xl">
-                <header className="mb-4 border-b border-[#243724] pb-5">
-                    <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#adc9ae]">WorkShop-X</p>
+                <header className="t-card-line mb-4 border-b pb-5">
+                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X</p>
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                         <div>
-                            <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Data Analyzer</h1>
+                            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Data Analyzer</h1>
                             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">Inspect your dataset, find its shape, and surface patterns worth exploring.</p>
                         </div>
-                        <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                        <div className="flex items-center gap-2">
+                            <ThemeButton theme={theme} onSelect={onSelectTheme} />
+                            <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                        </div>
                     </div>
                 </header>
 

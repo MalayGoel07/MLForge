@@ -1,3 +1,5 @@
+import ThemeButton from "./ThemeButton";
+
 const roadmapSections = [
     {
         title: "Introduction",
@@ -37,17 +39,20 @@ const roadmapSections = [
     },
 ];
 
-export default function Roadmap({ onNavigate }) {
+export default function Roadmap({ onNavigate, theme = "forest", onSelectTheme }) {
 	return (
-        <div className="h-screen overflow-x-hidden overflow-y-auto bg-[#292929] px-4 py-8 font-mono text-white md:px-8 overflow-y-auto scrollbar-thin scrollbar-thumb-[#7aa88a]">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-8 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <div className="mx-auto max-w-5xl">
-                <header className="mb-10 flex flex-col justify-between gap-4 border-b border-[#243724] pb-6 md:flex-row md:items-end">
+                <header className="t-card-line mb-10 flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-end">
                     <div>
-                        <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#adc9ae]">WorkShop-X / Roadmap</p>
+                        <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X / Roadmap</p>
                         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Machine learning</h1>
                         <p className="mt-2 text-sm leading-6 text-gray-400">Build the foundations in the order that makes every next step easier.</p>
                     </div>
-                    <button type="button" onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                    <div className="flex items-center gap-2">
+                        <ThemeButton theme={theme} onSelect={onSelectTheme} />
+                        <button type="button" onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                    </div>
                 </header>
 
                 <div className="relative">
