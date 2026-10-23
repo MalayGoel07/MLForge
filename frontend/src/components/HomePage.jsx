@@ -38,7 +38,8 @@ export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }
                   <button onClick={()=> navigate("/compare")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-green-400/40 hover:bg-green-500/10 hover:text-green-300">Model tester</button>
                   <button onClick={()=> navigate("/analyze")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-purple-400/40 hover:bg-purple-500/10 hover:text-purple-300">Analyse Data</button>
                   <button onClick={()=> navigate("/createdata")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-blue-400/40 hover:bg-blue-500/10 hover:text-blue-300">Create DataSet</button>
-                  <button onClick={()=> navigate("/roadmap")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-300">Resources and RoadMap</button>
+                  <button onClick={()=> navigate("/compiler")} className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base font-semibold text-gray-200 no-underline transition hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-300">Test Code</button>
+                  
                 </div>
             </div>
 
@@ -51,9 +52,9 @@ export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }
                         <span className="block text-base font-semibold text-white">Ai HelperBot</span>
                         <span className="mt-1 block text-xs text-gray-500">Ai-Bot helper for your queries.</span>
                     </button>
-                    <button className="rounded-xl border border-white/10 bg-black/30 p-4 no-underline transition hover:border-red-400/40 hover:bg-red-500/10">
-                        <span className="block text-base font-semibold text-white">Report Bug</span>
-                        <span className="mt-1 block text-xs text-gray-500">Report issues or unexpected behavior quickly.</span>
+                    <button onClick={()=> navigate("/roadmap")} className="rounded-xl border border-white/10 bg-black/30 p-4 no-underline transition hover:border-red-400/40 hover:bg-red-500/10">
+                        <span className="block text-base font-semibold text-white">Roadmap</span>
+                        <span className="mt-1 block text-xs text-gray-500">View the development roadmap.</span>
                     </button>
                   </div>
                 </div>
