@@ -35,8 +35,8 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
     <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none text-white font-sans pt-14 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">      
       <nav className="t-nav fixed top-0 left-0 w-full flex items-center justify-between px-6 py-4 border-b backdrop-blur-md z-50">        
         <span className="text-xl font-bold tracking-tight">
-          <span className="t-accent">WorkShop</span>
-          <span className="t-accent">-X</span>
+          <span className="t-accent">ML</span>
+          <span className="t-accent">-Forge</span>
         </span>
         <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -57,7 +57,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 leading-tight"> One interface
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#adc9ae] to-[#618c61]"> Many Models</span>
         </h1>
-        <p className="text-gray-400 text-[16px] max-w-xl mx-auto mb-10">WorKshop-X routes your data to the right data management system, then give details and distributes data to all avaible models.</p>
+        <p className="text-gray-400 text-[16px] max-w-xl mx-auto mb-10">MlForge routes your data to the right data management system, then give details and distributes data to all available models.</p>
         <div className="flex items-center justify-center gap-4">
           <button onClick={openWorkspace} className="bg-[#618c61] hover:bg-[#275728] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Start Testing</button>
           <a href="#models" className="border border-[#618c61] hover:border-[#91cc92] text-gray-300 hover:text-white px-6 py-2.5 rounded-lg font-medium transition-colors">View Models</a>
@@ -69,7 +69,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
           <div className="flex items-center justify-between px-5 py-3 border-b border-[#243724]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#adc9ae]"></span>
-              <span className="text-[#adc9ae] font-bold text-sm tracking-wide">WorkShop-X</span>
+              <span className="text-[#adc9ae] font-bold text-sm tracking-wide">MlForge</span>
             </div>
             <div className="w-7 h-7 rounded-full bg-[#243724] flex items-center justify-center text-xs text-gray-300">P</div>
           </div>
@@ -122,7 +122,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
       </section>
 
       <section id="features" className="max-w-5xl mx-auto px-8 pb-10 backdrop-blur-sm z-50">
-        <p className="text-xs tracking-widest text-[#adc9ae] uppercase mb-3 text-center">Why WorkShop-X</p>
+        <p className="text-xs tracking-widest text-[#adc9ae] uppercase mb-3 text-center">Why MlForge</p>
         <h2 className="text-3xl font-bold text-center mb-8">Built different</h2>
         <div className="grid md:grid-cols-3 gap-5">
           {[
@@ -157,8 +157,8 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
 
       <section className="border-t border-[#172617] py-8 text-center px-8 backdrop-blur-sm z-50">
         <h2 className="text-3xl font-bold mb-4">Ready to try models?</h2>
-        <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm">WorkShop-X brings together all the ML models and perform proper data management.</p>
-        <button onClick={openWorkspace} className="bg-[#618c61] hover:bg-[#275728] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch WorkShop-X</button>
+        <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm">MlForge brings together all the ML models and perform proper data management.</p>
+        <button onClick={openWorkspace} className="bg-[#618c61] hover:bg-[#275728] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch MlForge</button>
       </section>
 
       <footer className="border-t border-[#172617] px-8 py-6 flex items-center justify-between text-xs text-gray-600 backdrop-blur-sm z-50">

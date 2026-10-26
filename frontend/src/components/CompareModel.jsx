@@ -123,7 +123,7 @@ export default function CompareModel({ onNavigate, theme = "forest", onSelectThe
         <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <section className="mx-auto max-w-7xl">
                 <header className="t-card-line mb-4 border-b pb-5">
-                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X</p>
+                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Compare Models</h1>

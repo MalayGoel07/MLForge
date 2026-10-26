@@ -45,7 +45,7 @@ export default function Roadmap({ onNavigate, theme = "forest", onSelectTheme })
             <div className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-10 flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-end">
                     <div>
-                        <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X / Roadmap</p>
+                        <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge / Roadmap</p>
                         <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Machine learning</h1>
                         <p className="mt-2 text-sm leading-6 text-gray-400">Build the foundations in the order that makes every next step easier.</p>
                     </div>

@@ -1,4 +1,4 @@
-# ML-WorkShop-X
+# ML-Forge
 
 Lightweight ML training and benchmarking workshop application with a React + Vite frontend and a FastAPI backend. It provides an interface and HTTP API to upload datasets, train a selection of classic ML models (classification or regression), and return basic evaluation metrics. Intended for demos, teaching, or local experimentation — not production-ready.
 

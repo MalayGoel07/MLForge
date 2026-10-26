@@ -346,7 +346,7 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
             <style>{NOTEBOOK_STYLES}</style>
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
-                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X</p>
+                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">ML Notebook</h1>

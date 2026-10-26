@@ -125,7 +125,7 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
         const csv = [headers, ...dataset].map((row) => row.join(",")).join("\n");
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-        link.download = "workshop-x-dataset.csv";
+        link.download = "mlforge-dataset.csv";
         link.click();
         URL.revokeObjectURL(link.href);
     };
@@ -134,7 +134,7 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
         <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <section className="mx-auto max-w-7xl">
                 <header className="t-card-line mb-4 border-b pb-5">
-                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">WorkShop-X</p>
+                    <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
                         <div>
                             <h1 className="text-3xl font-bold tracking-tight md:text-4xl">Data Creator</h1>

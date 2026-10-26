@@ -11,7 +11,7 @@ if __package__ in (None, ""):
 else:
     from backend.ml.MlLogic import ml_router
 
-app = FastAPI(title="ML_WorkSHop API", version="0.0.1")
+app = FastAPI(title="MlForge API", version="0.0.1")
 app.add_middleware( CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"],)
 app.include_router(ml_router)
 
