@@ -19,13 +19,24 @@ const api = {
     return { data };
   },
   
-  async post(path, body) {
+  async post(path, body, headers = {}) {
+    // FormData carries its own multipart Content-Type (boundary) — never set it.
+    // URLSearchParams needs application/x-www-form-urlencoded set manually.
+    // Everything else is JSON.
     const isFormData = body instanceof FormData;
+    const isUrlEncoded = body instanceof URLSearchParams;
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       credentials: "include",
-      headers: isFormData ? authHeader() : { "Content-Type": "application/json", ...authHeader() },
-      body: isFormData ? body : JSON.stringify(body),
+      headers: {
+        ...authHeader(),
+        ...(isUrlEncoded && !headers["Content-Type"]
+          ? { "Content-Type": "application/x-www-form-urlencoded" }
+          : {}),
+        ...(!isFormData && !isUrlEncoded ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      body: isFormData || isUrlEncoded ? body : JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {throw new Error(data.detail || `Request failed (${response.status})`);}
