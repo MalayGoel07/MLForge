@@ -8,6 +8,7 @@ import CreateData from "./components/CreateData";
 import Compiler from "./components/Compiler";
 import AiChat from "./components/AiChat";
 import TextCode from "./components/TextCode";
+import Logsignpage from "./components/Logsignpage";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 
 export default function App() {
@@ -35,5 +36,7 @@ export default function App() {
   if (path === "/aichat") {return <AiChat onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   if (path === "/textcode") {return <TextCode onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   if (path === "/cleandata") {return <CreateData onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
+  if (path === "/") {return <CBXLanding onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
+  if (path === "/login") {return <Logsignpage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   return <CBXLanding onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;
 }

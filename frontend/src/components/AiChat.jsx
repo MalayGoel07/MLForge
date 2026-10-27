@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/api";
+import { authHeaders, clearToken, getToken } from "../api/auth";
 import ThemeButton from "./ThemeButton";
 
-const STORAGE_KEY = "mlforge-chats";
 const MAX_FILES = 5;
 const MAX_FILE_MB = 10;
 const ACCEPTED = "image/*,.csv,.json,.txt,.md";
@@ -14,20 +14,14 @@ const newChat = () => ({
     messages: [],
 });
 
-const loadChats = () => {
-    try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (Array.isArray(saved) && saved.length) return saved;
-    } catch { /* ignore corrupt storage */ }
-    return [newChat()];
-};
-
 const formatTime = (ts) =>
     new Date(ts).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) {
-    const [chats, setChats] = useState(loadChats);
-    const [activeId, setActiveId] = useState(() => loadChats()[0].id);
+    const [chats, setChats] = useState(() => [newChat()]);
+    const [activeId, setActiveId] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+    const dirty = useRef(new Set()); // ids of chats changed since their last save
     const [input, setInput] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
@@ -40,10 +34,47 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
 
     const activeChat = useMemo(() => chats.find((c) => c.id === activeId) || chats[0], [chats, activeId]);
 
-    // Persist history
+    const handleAuthError = (err) => {
+        if (err.response?.status !== 401) return false;
+        clearToken();
+        onNavigate("/login");
+        return true;
+    };
+
+    // Load this user's chats from the database
     useEffect(() => {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(chats)); } catch { /* storage full or blocked */ }
-    }, [chats]);
+        if (!getToken()) { onNavigate("/login"); return; }
+        let cancelled = false;
+        api.get("/chats", { headers: authHeaders() })
+            .then(({ data }) => {
+                if (cancelled) return;
+                const saved = data.chats || [];
+                if (saved.length) { setChats(saved); setActiveId(saved[0].id); }
+            })
+            .catch((err) => {
+                if (cancelled || handleAuthError(err)) return;
+                setError("Couldn't load your chats. Is the backend running?");
+            })
+            .finally(() => { if (!cancelled) setIsLoading(false); });
+        return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Save changed chats once a reply has finished streaming (never once per token)
+    useEffect(() => {
+        if (isSending || isLoading) return;
+        chats.forEach((chat) => {
+            if (!dirty.current.has(chat.id) || chat.messages.length === 0) return;
+            dirty.current.delete(chat.id);
+            const payload = { ...chat, messages: chat.messages.filter((m) => m.role === "user" || m.content) };
+            api.put(`/chats/${chat.id}`, payload, { headers: authHeaders() }).catch((err) => {
+                if (handleAuthError(err)) return;
+                dirty.current.add(chat.id); // retry on the next change
+                setError("Couldn't save this chat to your account.");
+            });
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [chats, isSending, isLoading]);
 
     // Keep latest message in view
     useEffect(() => {
@@ -64,8 +95,10 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
         return q ? sorted.filter((c) => c.title.toLowerCase().includes(q)) : sorted;
     }, [chats, search]);
 
-    const updateChat = (id, updater) =>
+    const updateChat = (id, updater) => {
+        dirty.current.add(id);
         setChats((prev) => prev.map((c) => (c.id === id ? updater(c) : c)));
+    };
 
     const startNewChat = () => {
         // Reuse an existing empty chat instead of stacking blank ones
@@ -85,6 +118,14 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
     };
 
     const deleteChat = (id) => {
+        dirty.current.delete(id);
+        // Empty chats were never saved, so there is nothing to delete server-side
+        if (chats.find((c) => c.id === id)?.messages.length) {
+            api.delete(`/chats/${id}`, { headers: authHeaders() }).catch((err) => {
+                if (handleAuthError(err)) return;
+                setError("Couldn't delete that chat on the server.");
+            });
+        }
         const remaining = chats.filter((c) => c.id !== id);
         if (!remaining.length) {
             const fresh = newChat();
@@ -97,6 +138,11 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
 
     const clearAll = () => {
         if (!window.confirm("Delete all chat history?")) return;
+        dirty.current.clear();
+        api.delete("/chats", { headers: authHeaders() }).catch((err) => {
+            if (handleAuthError(err)) return;
+            setError("Couldn't clear your history on the server.");
+        });
         const fresh = newChat();
         setChats([fresh]); setActiveId(fresh.id);
     };
@@ -135,7 +181,7 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
 
     const sendMessage = async () => {
         const text = input.trim();
-        if ((!text && !attachments.length) || isSending) return;
+        if ((!text && !attachments.length) || isSending || isLoading) return;
 
         const chatId = activeChat.id;
         const sentFiles = attachments;
@@ -166,8 +212,18 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
             form.append("history", JSON.stringify(history));
             sentFiles.forEach(({ file }) => form.append("files", file));
 
-            const res = await fetch(`${baseURL}/chat`, { method: "POST", body: form });
-            if (!res.ok || !res.body) throw new Error(`Request failed (${res.status})`);
+            const res = await fetch(`${baseURL}/chat`, { method: "POST", headers: authHeaders(), body: form });
+            if (res.status === 401) {
+                clearToken();
+                onNavigate("/login");
+                throw new Error("Session expired. Please log in again.");
+            }
+            if (!res.ok) {
+                let detail = "";
+                try { detail = (await res.json()).detail; } catch { /* body wasn't JSON */ }
+                throw new Error(typeof detail === "string" && detail ? detail : `Request failed (${res.status})`);
+            }
+            if (!res.body) throw new Error("Empty response from server.");
 
             updateChat(chatId, (c) => ({
                 ...c,
@@ -250,10 +306,11 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
                 </div>
 
                 <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#7aa88a]">
-                    {filteredChats.length === 0 && (
+                    {isLoading && <p className="p-3 text-xs text-gray-500">Loading chats...</p>}
+                    {!isLoading && filteredChats.length === 0 && (
                         <p className="p-3 text-xs text-gray-500">No chats match your search.</p>
                     )}
-                    {filteredChats.map((chat) => {
+                    {(isLoading ? [] : filteredChats).map((chat) => {
                         const isActive = chat.id === activeChat.id;
                         return (
                             <div
@@ -384,7 +441,7 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                disabled={isSending || attachments.length >= MAX_FILES}
+                                disabled={isSending || isLoading || attachments.length >= MAX_FILES}
                                 aria-label="Attach files or images"
                                 title="Attach files or images"
                                 className="shrink-0 rounded-lg border border-[#618c61] bg-[#172617] px-3 py-2 text-sm text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
@@ -404,7 +461,7 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
                             <button
                                 type="button"
                                 onClick={sendMessage}
-                                disabled={isSending || (!input.trim() && !attachments.length)}
+                                disabled={isSending || isLoading || (!input.trim() && !attachments.length)}
                                 className="shrink-0 rounded-lg border border-red-500 bg-red-400/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-400/30 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {isSending ? "Sending..." : "Send"}
