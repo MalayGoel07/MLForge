@@ -10,6 +10,10 @@ import AiChat from "./components/AiChat";
 import TextCode from "./components/TextCode";
 import Logsignpage from "./components/Logsignpage";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
+import { getToken } from "./api/auth";
+
+// Routes that do not require an account.
+const PUBLIC_ROUTES = ["/", "/login"];
 
 export default function App() {
   const [path, setPath] = useState(window.location.pathname);
@@ -26,6 +30,11 @@ export default function App() {
   }, []);
 
   const navigate = (nextPath) => {window.history.pushState({}, "", nextPath);setPath(nextPath);};
+
+  // Guard: pages that need an account send you to /login when getToken() is empty.
+  if (!PUBLIC_ROUTES.includes(path) && !getToken()) {
+    return <Logsignpage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} redirectTo={path} />;
+  }
 
   if (path === "/home") {return <HomePage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   if (path === "/analyze") {return <DataAnalyzer onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
