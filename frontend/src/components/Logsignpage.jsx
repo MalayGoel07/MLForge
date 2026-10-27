@@ -79,7 +79,7 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
             }
             setToken(data.access_token);
             onAuthSuccess?.(data.access_token);
-            onNavigate(redirectTo);
+            onNavigate("/home");
         } catch (err) {
             setError(errorMessage(err));
         } finally {
