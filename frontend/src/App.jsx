@@ -7,6 +7,7 @@ import Roadmap from "./components/Roadmap";
 import CreateData from "./components/CreateData";
 import Compiler from "./components/Compiler";
 import AiChat from "./components/AiChat";
+import TextCode from "./components/TextCode";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 
 export default function App() {
@@ -32,5 +33,7 @@ export default function App() {
   if (path === "/createdata") {return <CreateData onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   if (path === "/compiler") {return <Compiler onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   if (path === "/aichat") {return <AiChat onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
+  if (path === "/textcode") {return <TextCode onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
+  if (path === "/cleandata") {return <CreateData onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
   return <CBXLanding onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;
 }
