@@ -48,7 +48,7 @@ export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }
                 <div className="pt-6">
                   <h3 className="t-accent text-xl font-bold">Quick Actions</h3>
                   <div className="mt-5 grid gap-3">
-                    <button className="rounded-xl border border-white/10 bg-black/30 p-4 no-underline transition hover:border-cyan-400/40 hover:bg-cyan-500/10">
+                    <button onClick={()=> navigate("/aichat")} className="rounded-xl border border-white/10 bg-black/30 p-4 no-underline transition hover:border-cyan-400/40 hover:bg-cyan-500/10">
                         <span className="block text-base font-semibold text-white">Ai HelperBot</span>
                         <span className="mt-1 block text-xs text-gray-500">Ai-Bot helper for your queries.</span>
                     </button>
