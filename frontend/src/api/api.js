@@ -1,47 +1,73 @@
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL =
+import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 import { getToken } from "./auth";
 
-// Attach the bearer token to every outgoing request (like an axios request interceptor).
 const authHeader = () => {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-const api = {
-  async get(path) {
+const parseResponse = async (response) => {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) { throw new Error(data.detail || `Request failed (${response.status})`);}
+  return { data };
+};
+
+const api = {defaults: { baseURL: API_BASE_URL,},
+  async get(path, config = {}) {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      credentials: "include",
-      headers: authHeader(),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {throw new Error(data.detail || `Request failed (${response.status})`);}
-    return { data };
-  },
-  
-  async post(path, body, headers = {}) {
-    // FormData carries its own multipart Content-Type (boundary) — never set it.
-    // URLSearchParams needs application/x-www-form-urlencoded set manually.
-    // Everything else is JSON.
-    const isFormData = body instanceof FormData;
-    const isUrlEncoded = body instanceof URLSearchParams;
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
+      method: "GET",
       credentials: "include",
       headers: {
         ...authHeader(),
-        ...(isUrlEncoded && !headers["Content-Type"]
-          ? { "Content-Type": "application/x-www-form-urlencoded" }
-          : {}),
-        ...(!isFormData && !isUrlEncoded ? { "Content-Type": "application/json" } : {}),
-        ...headers,
+        ...(config.headers || {}),
       },
-      body: isFormData || isUrlEncoded ? body : JSON.stringify(body),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {throw new Error(data.detail || `Request failed (${response.status})`);}
-    return { data };
+    return parseResponse(response);
+  },
+
+  async post(path, body, headers = {}) {return this.request("POST", path, body, headers);},
+  async put(path, body, config = {}) {const headers = config.headers || config;return api.request("PUT", path, body, headers);},
+  async delete(path, config = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        ...authHeader(),
+        ...(config.headers || {}),
+      },
+    });
+    return parseResponse(response);
+  },
+  async request(method, path, body, headers = {}) {
+    const isFormData = body instanceof FormData;
+    const isUrlEncoded = body instanceof URLSearchParams;
+    const requestHeaders = {
+      ...authHeader(),
+      ...(!isFormData && !isUrlEncoded
+        ? { "Content-Type": "application/json" }
+        : {}),
+      ...(isUrlEncoded
+        ? { "Content-Type": "application/x-www-form-urlencoded" }
+        : {}),
+      ...headers,
+    };
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      credentials: "include",
+      headers: requestHeaders,
+      ...(body !== undefined
+        ? {
+            body:
+              isFormData || isUrlEncoded
+                ? body
+                : JSON.stringify(body),
+          }
+        : {}),
+    });
+    return parseResponse(response);
   },
 };
-
 export default api;

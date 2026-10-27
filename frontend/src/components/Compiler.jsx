@@ -90,27 +90,6 @@ function getKernel() {
 let idCounter = 0;
 const newCell = (code = "") => ({ id: `cell-${++idCounter}`, code, output: null, status: "idle", count: null });
 
-const STARTER_CELLS = [
-    `import numpy as np
-import pandas as pd
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
-
-X, y = load_iris(return_X_y=True, as_frame=True)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-X.head()`,
-    `model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-print("Accuracy:", accuracy_score(y_test, model.predict(X_test)))`,
-    `import matplotlib.pyplot as plt
-
-plt.barh(X.columns, model.feature_importances_)
-plt.title("Feature importance")
-plt.show()`,
-];
-
 const NOTEBOOK_STYLES = `
 .nb-html table{border-collapse:collapse;font-size:12px;color:#d4e6d5}
 .nb-html th,.nb-html td{border:1px solid #243724;padding:4px 10px;text-align:right}
@@ -163,7 +142,7 @@ function CellOutput({ output }) {
 }
 
 export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme }) {
-    const [cells, setCells] = useState(() => STARTER_CELLS.map(newCell));
+    const [cells, setCells] = useState(() => [newCell()]);
     const [kernelStatus, setKernelStatus] = useState("loading"); // loading | ready | error
     const [kernelError, setKernelError] = useState("");
     const [files, setFiles] = useState([]);
