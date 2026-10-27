@@ -20,7 +20,7 @@ const errorMessage = (err) => {
     return err.message || "Something went wrong. Try again.";
 };
 
-export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTheme, redirectTo = "/home", onAuthSuccess }) {
+export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTheme }) {
     const [mode, setMode] = useState("login");
     const [form, setForm] = useState({ fullName: "", username: "", email: "", password: "", confirm: "" });
     const [showPassword, setShowPassword] = useState(false);
@@ -77,8 +77,14 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
                     { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
                 ));
             }
-            setToken(data.access_token);
-            onAuthSuccess?.(data.access_token);
+            const token = data?.access_token;
+            if (!token) {
+                throw new Error("No access token received from the server.");
+            }
+            
+            setToken(token);
+            
+            // Navigate using your existing custom router.
             onNavigate("/home");
         } catch (err) {
             setError(errorMessage(err));

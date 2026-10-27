@@ -2,12 +2,13 @@ import os
 
 from dotenv import load_dotenv
 from pymongo import ASCENDING, DESCENDING, MongoClient
-
+from urllib.parse import quote_plus
 load_dotenv()
 
-MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    raise RuntimeError("MONGO_URI is not set. Add it to your .env file.")
+username=os.getenv("MONGO_USERNAME")
+password=os.getenv("MONGO_PASSWORD")
+cluster=os.getenv("MONGO_CLUSTER")
+MONGO_URI=f"mongodb+srv://{quote_plus(username)}:{quote_plus(password)}@{cluster}/"
 
 client = MongoClient(MONGO_URI)
 db = client[os.getenv("DB_NAME", "mlforge")]

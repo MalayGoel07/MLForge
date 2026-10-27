@@ -22,13 +22,12 @@ const placementRows = Array.from({ length: 100 }, (_, index) => {
   return { serialNo, cgpa, iq, placementPossibility: `${placementPossibility}%`,};});
 
 export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme }) {
-  const openWorkspace = () => {
-    if (onNavigate) {
-      onNavigate("/home");
-      return;
+  const navigate = (route) => {
+    if (typeof onNavigate === "function") {onNavigate(route);}
+    else {
+      console.warn( "HomePage] onNavigate prop missing or not a function — falling back to window.location");
+      window.location.href = route;
     }
-
-    window.location.href = "/home";
   };
 
   return (
@@ -45,7 +44,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
         </div>
         <div className="flex items-center gap-3">
           <ThemeButton theme={theme} onSelect={onSelectTheme} />
-          <button onClick={openWorkspace} className="t-btn bg-[#7aa88a] hover:bg-[#618c61] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
+          <button onClick={()=> navigate("/home")} className="t-btn bg-[#7aa88a] hover:bg-[#618c61] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
         </div>
       </nav>
 
@@ -59,7 +58,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
         </h1>
         <p className="text-gray-400 text-[16px] max-w-xl mx-auto mb-10">MlForge routes your data to the right data management system, then give details and distributes data to all available models.</p>
         <div className="flex items-center justify-center gap-4">
-          <button onClick={openWorkspace} className="bg-[#618c61] hover:bg-[#275728] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Start Testing</button>
+          <button onClick={()=> navigate("/home")} className="bg-[#618c61] hover:bg-[#275728] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Start Testing</button>
           <a href="#models" className="border border-[#618c61] hover:border-[#91cc92] text-gray-300 hover:text-white px-6 py-2.5 rounded-lg font-medium transition-colors">View Models</a>
         </div>
       </section>
@@ -158,7 +157,7 @@ export default function CBXLanding({ onNavigate, theme = "forest", onSelectTheme
       <section className="border-t border-[#172617] py-8 text-center px-8 backdrop-blur-sm z-50">
         <h2 className="text-3xl font-bold mb-4">Ready to try models?</h2>
         <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm">MlForge brings together all the ML models and perform proper data management.</p>
-        <button onClick={openWorkspace} className="bg-[#618c61] hover:bg-[#275728] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch MlForge</button>
+        <button onClick={()=> navigate("/home")} className="bg-[#618c61] hover:bg-[#275728] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch MlForge</button>
       </section>
 
       <footer className="border-t border-[#172617] px-8 py-6 flex items-center justify-between text-xs text-gray-600 backdrop-blur-sm z-50">
