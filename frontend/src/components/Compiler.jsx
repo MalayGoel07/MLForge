@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ThemeButton from "./ThemeButton";
+import { aiPanel } from "./aiPanelStore";
 
 const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
 
@@ -141,6 +142,25 @@ function CellOutput({ output }) {
     );
 }
 
+// Strip obvious secrets before anything leaves the notebook
+const redact = (s) => s
+    .replace(/(api[_-]?key|secret|token|password|passwd)(\s*[=:]\s*)(["'])[^"']+\3/gi, "$1$2$3[redacted]$3")
+    .replace(/\bsk-[A-Za-z0-9_-]{16,}/g, "[redacted]")
+    .replace(/\bgh[pos]_[A-Za-z0-9]{20,}/g, "[redacted]");
+const clip = (s, n) => (s && s.length > n ? `${s.slice(0, n)}…[truncated]` : s || "");
+const tail = (s, n) => (s && s.length > n ? `…${s.slice(-n)}` : s || "");
+
+const cellBlock = (c, i, full) => {
+    const o = c.output || {};
+    const lines = [`--- Cell ${i + 1} (${c.status}) ---`, "Code:", clip(c.code.trim(), full ? 1500 : 500) || "(empty)"];
+    if (o.stdout) lines.push("Output:", clip(o.stdout.trim(), full ? 800 : 250));
+    if (o.result) lines.push("Result:", clip(o.result, full ? 800 : 250));
+    if (o.stderr) lines.push("Warnings:", clip(o.stderr.trim(), 200));
+    if (o.error) lines.push("Error:", tail(o.error.trim(), full ? 1500 : 500)); // the exception message is at the end
+    if (o.images?.length) lines.push(`[${o.images.length} plot(s) produced]`);
+    return lines.join("\n");
+};
+
 export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme }) {
     const [cells, setCells] = useState(() => [newCell()]);
     const [kernelStatus, setKernelStatus] = useState("loading"); // loading | ready | error
@@ -233,6 +253,41 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
         });
 
     const clearOutputs = () => setCells((cs) => cs.map((c) => ({ ...c, output: null, status: "idle", count: null })));
+    const hasCode = cells.some((c) => c.code.trim());
+    const shareWithAI = (focusId) => {
+        const list = cellsRef.current;
+        // Focus the clicked cell; from the toolbar, focus the last cell that errored (if any)
+        const focusIdx = focusId
+            ? list.findIndex((c) => c.id === focusId)
+            : list.map((c) => c.status).lastIndexOf("error");
+        const f = focusIdx >= 0 ? list[focusIdx] : null;
+
+        const parts = [
+            "Page: ML Notebook (Python runs in the browser via Pyodide; cells share variables)",
+            `Uploaded files: ${files.length ? files.join(", ") : "none"}`,
+            `Cells: ${list.length}`,
+        ];
+        if (f) parts.push("FOCUS CELL:", cellBlock(f, focusIdx, true));
+        const others = list
+            .map((c, i) => [c, i])
+            .filter(([c, i]) => i !== focusIdx && c.code.trim())
+            .map(([c, i]) => cellBlock(c, i, false));
+        if (others.length) parts.push("OTHER CELLS:", ...others);
+
+        const greeting = f?.status === "error"
+            ? `I see an error in cell ${focusIdx + 1}. Want me to explain it or suggest a fix?`
+            : f
+                ? `I have cell ${focusIdx + 1} in front of me. What would you like help with?`
+                : `I can see your notebook (${list.length} cell${list.length === 1 ? "" : "s"}). How can I help with your code?`;
+
+        aiPanel.openWithContext({
+            id: `notebook-${f?.id ?? "all"}-${runCount.current}`,
+            title: f ? `Notebook: cell ${focusIdx + 1}` : "Notebook",
+            label: f ? `Notebook · cell ${focusIdx + 1}` : "Notebook",
+            greeting,
+            text: redact(parts.join("\n")).slice(0, 6000),
+        });
+    };
 
     const restartKernel = () => {
         pyRef.current?.runPython("_reset()");
@@ -345,6 +400,7 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
                         <button type="button" onClick={restartKernel} disabled={kernelStatus !== "ready"} className={toolbarBtn}>Restart kernel</button>
                         <button type="button" onClick={clearOutputs} className={toolbarBtn}>Clear outputs</button>
                         <button type="button" onClick={exportNotebook} className={toolbarBtn}>Export .ipynb</button>
+                        <button type="button" onClick={() => shareWithAI()} disabled={!hasCode} className={toolbarBtn}>✦ Context AI</button>
                         <span className={`ml-auto rounded border px-2 py-1 text-[10px] ${badge.className}`}>{badge.label}</span>
                     </div>
 
@@ -380,6 +436,10 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
                                 <div className="flex items-center justify-between border-b border-[#243724] bg-[#0e140e] px-3 py-1.5">
                                     <span className="text-xs text-gray-500">In [{running ? "*" : queued ? "…" : cell.count ?? " "}]</span>
                                     <div className="flex items-center gap-1">
+                                        <button type="button" onClick={() => shareWithAI(cell.id)} disabled={!cell.code.trim()}
+                                            className={`rounded border px-3 py-1 text-xs transition disabled:opacity-40 ${cell.status === "error" ? "border-red-800 text-red-300 hover:bg-red-600/20" : "border-[#243724] text-[#adc9ae] hover:border-[#618c61]"}`}>
+                                            {cell.status === "error" ? "Fix with AI" : "Ask AI"}
+                                        </button>
                                         <button type="button" onClick={() => enqueue(cell.id)} disabled={kernelStatus !== "ready" || running || queued} className="rounded border border-[#243724] px-3 py-1 text-xs text-[#d4e6d5] transition hover:border-green-300 hover:bg-green-300/10 disabled:opacity-40">Run</button>
                                         <button type="button" onClick={() => moveCell(index, -1)} disabled={index === 0} className={iconBtn} aria-label="Move cell up">Up</button>
                                         <button type="button" onClick={() => moveCell(index, 1)} disabled={index === cells.length - 1} className={iconBtn} aria-label="Move cell down">Down</button>
