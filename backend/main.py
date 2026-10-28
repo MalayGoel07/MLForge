@@ -26,8 +26,10 @@ from backend.ml.MlLogic import ml_router
 from backend.ml.clean_router import router as clean_router 
 from backend.security import ( ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserSignup, authenticate_user, create_access_token, get_current_active_user, get_password_hash,)
 
+frontend_url = os.getenv("frontend_url")
+
 app = FastAPI(title="MlForge API", version="0.0.1")
-app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
+app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",frontend_url],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
 app.include_router(ml_router)
 app.include_router(clean_router) 
 client = Client(host="http://localhost:11434")
