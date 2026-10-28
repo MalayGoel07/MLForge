@@ -233,8 +233,6 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
     const cards = dataset
         ? [["Rows", dataset.rows.length], ["Columns", dataset.headers.length], ["Missing values", missingValues], ["Value type", dataset.dataType]]
         : [];
-    const typeInfo = VALUE_TYPES.find((v) => v.value === dataType);
-    const taskInfo = TASK_TYPES.find((t) => t.value === type);
 
     const plan = [
         `Create ${rowCount} rows with ${columnCount} ${dataType} feature columns and a target`,

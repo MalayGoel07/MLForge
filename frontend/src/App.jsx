@@ -9,7 +9,7 @@ import Compiler from "./components/Compiler";
 import AiChat from "./components/AiChat";
 import TextCode from "./components/TextCode";
 import Logsignpage from "./components/Logsignpage";
-import CleanData from "./components/Cleandata";
+import CleanData from "./components/CleanData";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 import { getToken } from "./api/auth";
 
