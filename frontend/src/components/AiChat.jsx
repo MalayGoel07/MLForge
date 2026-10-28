@@ -52,6 +52,7 @@ function CodeBlock({ lang, code, closed, canInsert, onInsert }) {
         </div>
     );
 }
+
 // Mount this ONCE (in App.jsx), outside your routes, so it shows on every page.
 export default function AIChat({ onNavigate }) {
     const open = useAIPanelOpen();
@@ -61,7 +62,6 @@ export default function AIChat({ onNavigate }) {
     const loaded = useRef(false);
     const dirty = useRef(new Set());
     const [input, setInput] = useState("");
-    const [selectedProvider, setSelectedProvider] = useState("ollama");
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
     const [historyOpen, setHistoryOpen] = useState(false);
@@ -77,6 +77,37 @@ export default function AIChat({ onNavigate }) {
     const ctxChatId = useRef({});                      // ctx.id -> chatId (reuse chat on re-click)
     const [copiedKey, setCopiedKey] = useState("");
     const handledCtx = useRef(0);
+
+    // ---------- local model picker ----------
+    const [localModels, setLocalModels] = useState([]);
+    const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("ai_model") || "");
+    const [modelsError, setModelsError] = useState("");
+
+    const loadModels = async () => {
+        try {
+            const { data } = await api.get("/ai/models");
+            const names = (data.models || []).filter((m) => typeof m === "string");
+            setLocalModels(names);
+            setModelsError(names.length ? "" : "No local models found. Run: ollama pull <model>");
+            // keep the saved choice if it's still installed, otherwise fall back to the default
+            setSelectedModel((cur) => (names.includes(cur) ? cur : data.default || ""));
+        } catch {
+            setLocalModels([]);
+            setModelsError("Can't reach Ollama. Is it running?");
+        }
+    };
+
+    // Rescan installed models whenever the panel opens
+    useEffect(() => {
+        if (open) loadModels();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open]);
+
+    // Remember the choice across reloads
+    useEffect(() => {
+        if (selectedModel) localStorage.setItem("ai_model", selectedModel);
+    }, [selectedModel]);
+
     const copyMessage = async (text, key) => {
         try {
             await navigator.clipboard.writeText(text);
@@ -90,6 +121,7 @@ export default function AIChat({ onNavigate }) {
         setCopiedKey(key);
         setTimeout(() => setCopiedKey((k) => (k === key ? "" : k)), 1500);
     };
+
     const handleAuthError = (err) => {
         if (err.response?.status !== 401) return false;
         clearToken();
@@ -116,14 +148,15 @@ export default function AIChat({ onNavigate }) {
 
     // Esc closes, focus composer on open
     useEffect(() => {
-            if (!open) return;
-            const onKey = (e) => { if (e.key === "Escape") aiPanel.close(); };
-            window.addEventListener("keydown", onKey);
-            textareaRef.current?.focus();
-            return () => window.removeEventListener("keydown", onKey);
-        }, [open]);
+        if (!open) return;
+        const onKey = (e) => { if (e.key === "Escape") aiPanel.close(); };
+        window.addEventListener("keydown", onKey);
+        textareaRef.current?.focus();
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open]);
 
-        useEffect(() => {
+    // Open (or reuse) a chat when the page sends context
+    useEffect(() => {
         if (!open || isLoading || !aiContext || handledCtx.current === aiContext.nonce) return;
         handledCtx.current = aiContext.nonce;
         const existing = ctxChatId.current[aiContext.id];
@@ -162,6 +195,7 @@ export default function AIChat({ onNavigate }) {
     }, [chats, isSending, isLoading]);
 
     useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [activeChat?.messages.length, isSending, open]);
+
     useEffect(() => {
         const el = textareaRef.current;
         if (!el) return;
@@ -245,12 +279,12 @@ export default function AIChat({ onNavigate }) {
     };
 
     const removeAttachment = (id) => {
-            setAttachments((prev) => {
-                const target = prev.find((a) => a.id === id);
-                if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-                return prev.filter((a) => a.id !== id);
-            });
-        };
+        setAttachments((prev) => {
+            const target = prev.find((a) => a.id === id);
+            if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+            return prev.filter((a) => a.id !== id);
+        });
+    };
 
     const runReply = async ({ chatId, text, history, files }) => {
         setError(""); setIsSending(true);
@@ -259,7 +293,7 @@ export default function AIChat({ onNavigate }) {
             const form = new FormData();
             form.append("message", text);
             form.append("history", JSON.stringify(history));
-            form.append("provider", selectedProvider);
+            if (selectedModel) form.append("model", selectedModel);
             const ctx = ctxByChat[chatId];
             if (ctx) form.append("context", ctx.text);
             files.forEach((file) => form.append("files", file));
@@ -349,6 +383,7 @@ export default function AIChat({ onNavigate }) {
         updateChat(activeChat.id, (c) => ({ ...c, messages: c.messages.slice(0, -1) }));
         runReply({ chatId: activeChat.id, text: msgs[userIdx].content, history, files: [] });
     };
+
     const handleKeyDown = (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -446,7 +481,11 @@ export default function AIChat({ onNavigate }) {
                                                     ))}
                                                 </div>
                                             )}
-                                            {msg.content && (isUser ? <p className="whitespace-pre-wrap break-words">{msg.content}</p> : parseBlocks(msg.content).map((b, k) => b.type === "code"? <CodeBlock key={k} lang={b.lang} code={b.content} closed={b.closed} canInsert={!!insertHandler} onInsert={insertHandler} />: b.content.trim() && <p key={k} className="whitespace-pre-wrap break-words">{b.content.trim()}</p>))}
+                                            {msg.content && (isUser
+                                                ? <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                                : parseBlocks(msg.content).map((b, k) => b.type === "code"
+                                                    ? <CodeBlock key={k} lang={b.lang} code={b.content} closed={b.closed} canInsert={!!insertHandler} onInsert={insertHandler} />
+                                                    : b.content.trim() && <p key={k} className="whitespace-pre-wrap break-words">{b.content.trim()}</p>))}
                                         </div>
                                         {!isUser && msg.content && !(isSending && i === activeChat.messages.length - 1) && (() => {
                                             const key = `${activeChat.id}-${i}`;
@@ -491,7 +530,7 @@ export default function AIChat({ onNavigate }) {
                                 </span>
                             </div>
                         )}
-                        {error && <p role="alert" className="mb-2 text-xs text-[#f85149]">{error}</p>}
+                        {(error || modelsError) && <p role="alert" className="mb-2 text-xs text-[#f85149]">{error || modelsError}</p>}
                         <input ref={fileInputRef} type="file" multiple accept={ACCEPTED} className="hidden" onChange={handleFilesChosen} />
                         {attachments.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-2">
@@ -528,14 +567,16 @@ export default function AIChat({ onNavigate }) {
                                 className="max-h-36 flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-[#c9d1d9] outline-none placeholder:text-[#6e7681]"
                             />
                             <select
-                                value={selectedProvider}
-                                onChange={(e) => setSelectedProvider(e.target.value)}
-                                disabled={isSending || isLoading}
-                                className="shrink-0 rounded-md border border-[#30363d] bg-[#21262d] px-2.5 py-1.5 text-sm text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
-                                aria-label="AI provider"
+                                value={selectedModel}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                                onFocus={loadModels}
+                                disabled={isSending || isLoading || !localModels.length}
+                                title={modelsError || "Local model"}
+                                aria-label="Local model"
+                                className="max-w-[9rem] shrink-0 truncate rounded-md border border-[#30363d] bg-[#21262d] px-2 py-1.5 text-xs text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <option value="ollama">Ollama — Local AI</option>
-                                <option value="gemini">Google Gemini</option>
+                                {!localModels.length && <option value="">No models</option>}
+                                {localModels.map((m) => <option key={m} value={m}>{m}</option>)}
                             </select>
                             <button
                                 type="button"

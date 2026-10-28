@@ -5,8 +5,6 @@ import time
 from datetime import timedelta
 from pathlib import Path
 from typing import Annotated, List, Literal
-from google import genai
-from google.genai import types
 
 import uvicorn
 from dotenv import load_dotenv
@@ -33,10 +31,6 @@ app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173", "http:
 app.include_router(ml_router)
 app.include_router(clean_router) 
 client = Client(host="http://localhost:11434")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-
-gemini_client = ( genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None )
 
 M_CODER = os.getenv("model")
 M_VISION = os.getenv("vision_model")
@@ -50,6 +44,7 @@ MAX_HISTORY_MESSAGES = 20
 MAX_FILES = 5
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_CONTEXT_CHARS = 6000
+MAX_TEXT_CHARS = 20000
 CONTEXT_INSTRUCTIONS = (
     "The <context> block shows what the user is looking at in MLForge: an ML experiment's results, "
     "or notebook code with its outputs and errors. "
@@ -96,6 +91,21 @@ class ProfileUpdate(BaseModel):
     system_prompt: str | None = None
 
 
+def installed_models() -> list[str]:
+    resp = client.list()
+    names = []
+    for m in resp["models"]:
+        name = m.get("model") or m.get("name")
+        if name and "embed" not in name.lower():
+            names.append(name)
+    return sorted(names)
+
+def has_vision(name: str) -> bool:
+    try:
+        return "vision" in (client.show(name).get("capabilities") or [])
+    except Exception:
+        return False
+
 def sse(payload: dict) -> str:
     return f"data: {json.dumps(payload)}\n\n"
 
@@ -106,20 +116,14 @@ async def root():
     return {"message": "Running!"}
 
 
-@app.get("/models")
-async def get_models():
-    models = [
-        {"role": "Coder", "provider": "ollama", "model": M_CODER},
-        {"role": "Vision", "provider": "ollama", "model": M_VISION},
-    ]
-    if gemini_client:
-        models.append({
-            "role": "Gemini",
-            "provider": "gemini",
-            "model": GEMINI_MODEL,
-        })
-    return {"models": models}
-
+@app.get("/ai/models")
+def get_models():
+    try:
+        names = installed_models()
+    except Exception:
+        raise HTTPException(503, "Can't reach Ollama. Is it running?")
+    default = M_CODER if M_CODER in names else (names[0] if names else None)
+    return {"models": names, "default": default, "vision": M_VISION}
 
 # ---------- auth ----------
 @app.post("/auth/login")
@@ -207,14 +211,15 @@ def clear_chats(current_user: ActiveUser):
 
 # ---------- streaming chat ----------
 @app.post("/chat")
-async def chat(current_user: ActiveUser, message: str = Form(""), history: str = Form("[]"), context: str = Form(""),provider: str = Form("ollama"), files: List[UploadFile] = File(default=[]),):
+async def chat(current_user: ActiveUser,message: str = Form(""),history: str = Form("[]"),context: str = Form(""),model: str = Form(""),files: List[UploadFile] = File(default=[]),):
     if len(files) > MAX_FILES:
         raise HTTPException(413, f"Attach no more than {MAX_FILES} files.")
     try:
         past = [Message.model_validate(m) for m in json.loads(history)]
     except (json.JSONDecodeError, TypeError, ValidationError):
         raise HTTPException(400, "Invalid chat history.")
-    images: List[tuple[bytes, str]] = []
+
+    images: List[bytes] = []
     file_blocks: List[str] = []
     for f in files:
         name = f.filename or "attachment"
@@ -223,79 +228,72 @@ async def chat(current_user: ActiveUser, message: str = Form(""), history: str =
             raise HTTPException(413, f"{name} exceeds the 10 MB file limit.")
         ext = Path(name).suffix.lower()
         if (f.content_type or "").startswith("image/"):
-            images.append((data,f.content_type or "image/jpeg",))
+            images.append(data)
         elif ext in TEXT_EXTS:
             body = data.decode("utf-8", errors="replace")
             note = "\n[truncated]" if len(body) > MAX_TEXT_CHARS else ""
             file_blocks.append(f"--- file: {name} ---\n{body[:MAX_TEXT_CHARS]}{note}")
         else:
             raise HTTPException(415, f"Unsupported file type: {name}")
+
     text = message.strip()
     if not text and not (images or file_blocks):
         raise HTTPException(422, "Enter a message or attach a file.")
     if not text:
         text = "Describe the attached file(s)."
+
     user_msg = {"role": "user", "content": text + ("\n\n" + "\n\n".join(file_blocks) if file_blocks else "")}
-    if images:user_msg["images"] = images
+    if images:
+        user_msg["images"] = images
+
     system = SYSTEM_PROMPT
     if current_user.system_prompt and current_user.system_prompt.strip():
         system += "\n\n" + current_user.system_prompt.strip()
     if context.strip():
         system += f"\n\n{CONTEXT_INSTRUCTIONS}\n<context>\n{context.strip()[:MAX_CONTEXT_CHARS]}\n</context>"
-    messages = ( [{"role": "system", "content": system}] + [{"role": m.role, "content": m.content} for m in past[-MAX_HISTORY_MESSAGES:]] + [user_msg])
-    model = M_VISION if images else M_CODER
 
-    if provider not in {"ollama", "gemini"}:
-        raise HTTPException(400, "Unsupported AI provider.")
-    if provider == "gemini" and not gemini_client:
-        raise HTTPException(503, "Gemini API is not configured.")
+    messages = (
+        [{"role": "system", "content": system}]
+        + [{"role": m.role, "content": m.content} for m in past[-MAX_HISTORY_MESSAGES:]]
+        + [user_msg]
+    )
+    requested = model.strip()
+    if requested:
+        try:
+            if requested not in installed_models():
+                raise HTTPException(400, f"Model '{requested}' is not installed. Run: ollama pull {requested}")
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(503, "Can't reach Ollama. Is it running?")
+
+    if images:
+        # use the picked model if it can see images, else fall back to the env vision model
+        use_model = requested if requested and has_vision(requested) else M_VISION
+    else:
+        use_model = requested or M_CODER
 
     def generate():
+        if not use_model:
+            which = "vision_model" if images else "model"
+            yield sse({"error": f"No model configured. Set `{which}` in .env."})
+            return
         try:
-            if provider == "gemini":
-                contents = []
-                for item in past[-MAX_HISTORY_MESSAGES:]:
-                    contents.append(
-                        types.Content(
-                            role=(
-                                "model"
-                                if item.role == "assistant"
-                                else "user"
-                            ),
-                            parts=[types.Part.from_text(text=item.content)],
-                        )
-                    )
-
-                current_parts = [types.Part.from_text(text=user_msg["content"])]
-                for image_data, mime_type in images:
-                    current_parts.append( types.Part.from_bytes(data=image_data,mime_type=mime_type,))
-
-                contents.append(types.Content(role="user",parts=current_parts,))
-                stream = gemini_client.models.generate_content_stream( model=GEMINI_MODEL, contents=contents, config=types.GenerateContentConfig(system_instruction=system,temperature=0.5,max_output_tokens=NUM_PREDICT,),)
-
-                for chunk in stream:
-                    if chunk.text:yield sse({"t": chunk.text})
-
-            else:
-                ollama_user_msg = {"role": "user","content": user_msg["content"],}
-                if images: ollama_user_msg["images"] = [image_data for image_data, _ in images]
-                messages = ([{"role": "system", "content": system}]+ [{"role": m.role, "content": m.content}for m in past[-MAX_HISTORY_MESSAGES:]]+ [ollama_user_msg])
-                if not model:
-                    which = ("vision_model" if images else "model")
-                    yield sse({"error": f"No model configured. Set `{which}` in .env."})
-                    return
-                stream = client.chat( model=model, messages=messages, stream=True, keep_alive="1m", options={"temperature": 0.5,"num_predict": NUM_PREDICT,},)
-                for chunk in stream:
-                    content = chunk["message"]["content"]
-                    if content:
-                        yield sse({"t": content})
-
+            stream = client.chat(
+                model=use_model, messages=messages, stream=True, keep_alive="1m",
+                options={"temperature": 0.5, "num_predict": NUM_PREDICT},
+            )
+            for chunk in stream:
+                content = chunk["message"]["content"]
+                if content:
+                    yield sse({"t": content})
             yield "data: [DONE]\n\n"
         except Exception:
             import logging
             logging.exception("Chat generation failed")
             yield sse({"error": "AI generation failed. Check backend logs."})
-    return StreamingResponse(generate(),media_type="text/event-stream",)
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
