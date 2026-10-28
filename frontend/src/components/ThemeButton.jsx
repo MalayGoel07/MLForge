@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useState } from "react";
-
+import AIButton from "./AIButton";
 export const THEME_KEY = "mlforge-theme";
 
 export const THEMES = [
@@ -56,6 +56,8 @@ export default function ThemeButton({ theme, onSelect, className = "" }) {
   }, [open]);
 
   return (
+    <div className={`inline-flex items-center gap-2 ${className}`}>
+    <AIButton />
     <div ref={boxRef} className={`relative inline-block ${className}`}>
       <button
         type="button"
@@ -101,5 +103,6 @@ export default function ThemeButton({ theme, onSelect, className = "" }) {
         </ul>
       )}
     </div>
+  </div>
   );
 }

@@ -3,9 +3,7 @@ import ThemeButton from "./ThemeButton";
 import libraryGroups from "./mlLibraryData";
 
 /* ---------- tiny Python highlighter (per line) ---------- */
-const TOKEN_RE =
-  /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(import|from|as|def|return|for|in|if|elif|else|while|with|class|lambda|try|except|break|continue|and|or|not|is|pass|yield|await|async)\b|\b(True|False|None)\b|\b(\d+\.?\d*)\b/g;
-
+const TOKEN_RE =/(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(import|from|as|def|return|for|in|if|elif|else|while|with|class|lambda|try|except|break|continue|and|or|not|is|pass|yield|await|async)\b|\b(True|False|None)\b|\b(\d+\.?\d*)\b/g;
 function highlight(line) {
   if (!line) return " ";
   const out = [];
@@ -32,10 +30,10 @@ function highlight(line) {
 }
 
 export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }) {
-  const [selectedId, setSelectedId] = useState(libraryGroups[0].items[0].id);
+  const [selectedId, setSelectedId] = useState(null); // nothing open at first
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("code");
-  const [collapsed, setCollapsed] = useState({});
+  const [expanded, setExpanded] = useState({}); // every group starts closed
   const [revealed, setRevealed] = useState({});
   const [copied, setCopied] = useState("");
 
@@ -71,19 +69,27 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
     [visibleGroups]
   );
 
-  const selected = flat.find((i) => i.id === selectedId) ?? flat[0];
+  const selected = flat.find((i) => i.id === selectedId) ?? null;
   const totalItems = flat.length;
-  const lines = selected.code.split("\n");
+  const lines = selected ? selected.code.split("\n") : [];
 
   const navList = visibleFlat.length ? visibleFlat : flat;
-  const idx = navList.findIndex((i) => i.id === selected.id);
+  const idx = selected ? navList.findIndex((i) => i.id === selected.id) : -1;
   const go = (step) => {
     const next = navList[(idx + step + navList.length) % navList.length];
     select(next.id);
   };
 
   function select(id) {
+    const item = flat.find((i) => i.id === id);
+    if (item) setExpanded((e) => ({ ...e, [item.group]: true })); // keep the active item visible in the sidebar
     setSelectedId(id);
+    setCopied("");
+    setRevealed({});
+  }
+
+  function closeSnippet() {
+    setSelectedId(null);
     setCopied("");
     setRevealed({});
   }
@@ -100,9 +106,9 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
 
   const toggleReveal = (i) =>
     setRevealed((r) => ({ ...r, [i]: !r[i] }));
-  const allShown = selected.qa.every((_, i) => revealed[i]);
+  const allShown = selected ? selected.qa.every((_, i) => revealed[i]) : false;
   const setAll = (val) =>
-    setRevealed(Object.fromEntries(selected.qa.map((_, i) => [i, val])));
+    selected && setRevealed(Object.fromEntries(selected.qa.map((_, i) => [i, val])));
 
   return (
     <main className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
@@ -158,14 +164,14 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
             )}
 
             {visibleGroups.map((group) => {
-              const open = q ? true : !collapsed[group.title];
+              const open = q ? true : !!expanded[group.title]; // searching opens matching groups
               return (
                 <section className="mt-1" key={group.title}>
                   <button
                     type="button"
                     className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs font-bold text-[#d4e6d5] transition hover:bg-[#172617]"
                     onClick={() =>
-                      setCollapsed((c) => ({ ...c, [group.title]: !c[group.title] }))
+                      setExpanded((e) => ({ ...e, [group.title]: !e[group.title] }))
                     }
                     aria-expanded={open}
                   >
@@ -190,7 +196,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                   {open && (
                     <div className="mb-1 mt-1 grid gap-0.5 pl-2">
                       {group.items.map((item) => {
-                        const active = selected.id === item.id;
+                        const active = selected?.id === item.id;
                         return (
                           <button
                             type="button"
@@ -237,157 +243,183 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
           className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#243724] bg-[#0e140e]/80 shadow-2xl shadow-[#172617]/20"
           aria-label="Selected snippet"
         >
-          {/* title bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243724] px-4 py-4 sm:px-5">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#243724] bg-[#101a10] text-xs font-medium text-[#adc9ae]">
-                Py
-              </span>
-              <div className="min-w-0">
-                <h2 className="truncate text-sm font-bold text-[#d4e6d5]">
-                  {selected.label}
-                </h2>
-                <p className="mt-1 text-[11px] text-gray-500">{selected.group}</p>
+          {!selected ? (
+            <div className="grid min-h-[280px] flex-1 place-items-center p-8 text-center lg:min-h-[420px]">
+              <div className="max-w-xs">
+                <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl border border-[#243724] bg-[#101a10] text-xs font-medium text-[#adc9ae]">
+                  Py
+                </span>
+                <h2 className="mt-4 text-sm font-bold text-[#d4e6d5]">No snippet open</h2>
+                <p className="mt-2 text-xs leading-6 text-gray-500">
+                  Open a group in the list and pick a snippet to see its code and self-test questions.
+                </p>
               </div>
             </div>
-
-            <div className="flex items-center gap-1 rounded-lg border border-[#243724] bg-[#070a07]/50 p-1">
-              {[
-                ["code", "Code"],
-                ["qa", `Self-test (${selected.qa.length})`],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${
-                    tab === key
-                      ? "bg-[#172617] text-[#d4e6d5]"
-                      : "text-gray-400 hover:text-[#d4e6d5]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* install line */}
-          <div className="flex items-center justify-between gap-3 border-b border-[#243724] bg-[#070a07]/30 px-4 py-2.5 sm:px-5">
-            <code className="min-w-0 truncate font-mono text-[11px] text-gray-400">
-              <span className="select-none text-gray-600">$ </span>
-              {selected.requires}
-            </code>
-            <button
-              type="button"
-              onClick={() => copy("install", selected.requires)}
-              className="shrink-0 text-[10px] font-semibold text-gray-500 transition hover:text-[#adc9ae]"
-            >
-              {copied === "install" ? "Copied" : "Copy"}
-            </button>
-          </div>
-
-          {tab === "code" ? (
+          ) : (
             <>
-              <div className="flex items-center justify-between border-b border-[#243724] px-4 py-2.5 text-[10px] text-gray-500 sm:px-5">
-                <span className="inline-flex items-center gap-2 text-[#d4e6d5]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#7aa88a]" />
-                  Python
-                  <span className="text-gray-600">{lines.length} lines</span>
+              {/* title bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243724] px-4 py-4 sm:px-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#243724] bg-[#101a10] text-xs font-medium text-[#adc9ae]">
+                    Py
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm font-bold text-[#d4e6d5]">
+                      {selected.label}
+                    </h2>
+                    <p className="mt-1 text-[11px] text-gray-500">{selected.group}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 rounded-lg border border-[#243724] bg-[#070a07]/50 p-1">
+                    {[
+                      ["code", "Code"],
+                      ["qa", `Self-test (${selected.qa.length})`],
+                    ].map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setTab(key)}
+                        className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${
+                          tab === key
+                            ? "bg-[#172617] text-[#d4e6d5]"
+                            : "text-gray-400 hover:text-[#d4e6d5]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeSnippet}
+                    aria-label="Close snippet"
+                    className="rounded-lg border border-[#243724] px-3 py-2 text-[11px] font-semibold text-gray-400 transition hover:border-[#618c61] hover:text-[#d4e6d5]"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+
+              {/* install line */}
+              <div className="flex items-center justify-between gap-3 border-b border-[#243724] bg-[#070a07]/30 px-4 py-2.5 sm:px-5">
+                <code className="min-w-0 truncate font-mono text-[11px] text-gray-400">
+                  <span className="select-none text-gray-600">$ </span>
+                  {selected.requires}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => copy("install", selected.requires)}
+                  className="shrink-0 text-[10px] font-semibold text-gray-500 transition hover:text-[#adc9ae]"
+                >
+                  {copied === "install" ? "Copied" : "Copy"}
+                </button>
+              </div>
+
+              {tab === "code" ? (
+                <>
+                  <div className="flex items-center justify-between border-b border-[#243724] px-4 py-2.5 text-[10px] text-gray-500 sm:px-5">
+                    <span className="inline-flex items-center gap-2 text-[#d4e6d5]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#7aa88a]" />
+                      Python
+                      <span className="text-gray-600">{lines.length} lines</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => copy("code", selected.code)}
+                      className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition ${
+                        copied === "code"
+                          ? "border-[#7aa88a] bg-[#172617] text-[#adc9ae]"
+                          : "border-[#618c61] bg-[#172617] text-[#d4e6d5] hover:bg-[#1f331f] hover:text-white"
+                      }`}
+                    >
+                      <span aria-hidden="true">{copied === "code" ? "✓" : "▢"}</span>
+                      {copied === "code" ? "Copied!" : "Copy code"}
+                    </button>
+                  </div>
+
+                  <div className="green-thin-scroll max-h-[640px] min-h-[360px] flex-1 overflow-auto bg-[#070a07] py-5">
+                    <pre className="m-0 font-mono text-xs leading-[1.9] text-[#d4e6d5]">
+                      <code>
+                        {lines.map((line, i) => (
+                          <span
+                            className="grid min-h-[22px] grid-cols-[52px_minmax(max-content,1fr)] pr-5"
+                            key={`${selected.id}-${i}`}
+                          >
+                            <span className="select-none pr-4 text-right text-gray-600">
+                              {i + 1}
+                            </span>
+                            <span className="whitespace-pre">{highlight(line)}</span>
+                          </span>
+                        ))}
+                      </code>
+                    </pre>
+                  </div>
+                </>
+              ) : (
+                <div className="green-thin-scroll min-h-[360px] flex-1 space-y-3 overflow-auto bg-[#070a07]/60 p-4 sm:p-5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500">
+                      Answer out loud first, then reveal.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAll(!allShown)}
+                      className="rounded-lg border border-[#618c61] bg-[#172617] px-3 py-1.5 text-[11px] font-semibold text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white"
+                    >
+                      {allShown ? "Hide all" : "Reveal all"}
+                    </button>
+                  </div>
+
+                  {selected.qa.map((item, i) => (
+                    <article
+                      key={`${selected.id}-qa-${i}`}
+                      className="rounded-xl border border-[#243724] bg-[#101a10] p-4"
+                    >
+                      <h3 className="text-sm font-semibold leading-6 text-[#d4e6d5]">
+                        {item.q}
+                      </h3>
+                      {revealed[i] ? (
+                        <p className="mt-2 rounded-lg border border-[#7aa88a]/30 bg-[#172617] p-3 text-xs leading-6 text-[#d4e6d5]">
+                          {item.a}
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => toggleReveal(i)}
+                          className="mt-2 rounded-lg border border-[#243724] px-3 py-1.5 text-[11px] font-semibold text-[#adc9ae] transition hover:bg-[#172617]"
+                        >
+                          Show answer
+                        </button>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              {/* footer nav */}
+              <footer className="flex items-center justify-between gap-3 border-t border-[#243724] px-4 py-3 text-[11px] text-gray-500 sm:px-5">
+                <button
+                  type="button"
+                  onClick={() => go(-1)}
+                  className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
+                >
+                  ← Previous
+                </button>
+                <span>
+                  {idx + 1} / {navList.length}
                 </span>
                 <button
                   type="button"
-                  onClick={() => copy("code", selected.code)}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition ${
-                    copied === "code"
-                      ? "border-[#7aa88a] bg-[#172617] text-[#adc9ae]"
-                      : "border-[#618c61] bg-[#172617] text-[#d4e6d5] hover:bg-[#1f331f] hover:text-white"
-                  }`}
+                  onClick={() => go(1)}
+                  className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
                 >
-                  <span aria-hidden="true">{copied === "code" ? "✓" : "▢"}</span>
-                  {copied === "code" ? "Copied!" : "Copy code"}
+                  Next →
                 </button>
-              </div>
-
-              <div className="green-thin-scroll max-h-[640px] min-h-[360px] flex-1 overflow-auto bg-[#070a07] py-5">
-                <pre className="m-0 font-mono text-xs leading-[1.9] text-[#d4e6d5]">
-                  <code>
-                    {lines.map((line, i) => (
-                      <span
-                        className="grid min-h-[22px] grid-cols-[52px_minmax(max-content,1fr)] pr-5"
-                        key={`${selected.id}-${i}`}
-                      >
-                        <span className="select-none pr-4 text-right text-gray-600">
-                          {i + 1}
-                        </span>
-                        <span className="whitespace-pre">{highlight(line)}</span>
-                      </span>
-                    ))}
-                  </code>
-                </pre>
-              </div>
+              </footer>
             </>
-          ) : (
-            <div className="green-thin-scroll min-h-[360px] flex-1 space-y-3 overflow-auto bg-[#070a07]/60 p-4 sm:p-5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-500">
-                  Answer out loud first, then reveal.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setAll(!allShown)}
-                  className="rounded-lg border border-[#618c61] bg-[#172617] px-3 py-1.5 text-[11px] font-semibold text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white"
-                >
-                  {allShown ? "Hide all" : "Reveal all"}
-                </button>
-              </div>
-
-              {selected.qa.map((item, i) => (
-                <article
-                  key={`${selected.id}-qa-${i}`}
-                  className="rounded-xl border border-[#243724] bg-[#101a10] p-4"
-                >
-                  <h3 className="text-sm font-semibold leading-6 text-[#d4e6d5]">
-                    {item.q}
-                  </h3>
-                  {revealed[i] ? (
-                    <p className="mt-2 rounded-lg border border-[#7aa88a]/30 bg-[#172617] p-3 text-xs leading-6 text-[#d4e6d5]">
-                      {item.a}
-                    </p>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toggleReveal(i)}
-                      className="mt-2 rounded-lg border border-[#243724] px-3 py-1.5 text-[11px] font-semibold text-[#adc9ae] transition hover:bg-[#172617]"
-                    >
-                      Show answer
-                    </button>
-                  )}
-                </article>
-              ))}
-            </div>
           )}
-
-          {/* footer nav */}
-          <footer className="flex items-center justify-between gap-3 border-t border-[#243724] px-4 py-3 text-[11px] text-gray-500 sm:px-5">
-            <button
-              type="button"
-              onClick={() => go(-1)}
-              className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
-            >
-              ← Previous
-            </button>
-            <span>
-              {idx + 1} / {navList.length}
-            </span>
-            <button
-              type="button"
-              onClick={() => go(1)}
-              className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
-            >
-              Next →
-            </button>
-          </footer>
         </section>
       </section>
     </main>

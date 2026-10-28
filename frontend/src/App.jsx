@@ -9,43 +9,44 @@ import Compiler from "./components/Compiler";
 import AiChat from "./components/AiChat";
 import TextCode from "./components/TextCode";
 import Logsignpage from "./components/Logsignpage";
+import CleanData from "./components/Cleandata";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 import { getToken } from "./api/auth";
-
-// Routes that do not require an account.
 const PUBLIC_ROUTES = ["/", "/login"];
+const ROUTES = {
+  "/home": HomePage,
+  "/analyze": DataAnalyzer,
+  "/compare": CompareModel,
+  "/roadmap": Roadmap,
+  "/createdata": CreateData,
+  "/compiler": Compiler,
+  "/textcode": TextCode,
+  "/cleandata": CleanData,
+};
 
 export default function App() {
   const [path, setPath] = useState(window.location.pathname);
-  // Universal theme — saved to localStorage, persists across pages AND reloads
-  // until the user picks another one.
   const [theme, setTheme] = useState(() => loadTheme());
   const selectTheme = (id) => setTheme(id);
   useGlobalTheme(theme);
-
   useEffect(() => {
     const handlePopState = () => setPath(window.location.pathname);
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const navigate = (nextPath) => {window.history.pushState({}, "", nextPath);setPath(nextPath);};
-
-  // Guard: pages that need an account send you to /login when getToken() is empty.
-  if (!PUBLIC_ROUTES.includes(path) && !getToken()) {
-    return <Logsignpage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} redirectTo={path} />;
-  }
-
-  if (path === "/home") {return <HomePage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/analyze") {return <DataAnalyzer onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/compare") {return <CompareModel onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/roadmap") {return <Roadmap onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/createdata") {return <CreateData onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/compiler") {return <Compiler onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/aichat") {return <AiChat onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/textcode") {return <TextCode onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/cleandata") {return <CreateData onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/") {return <CBXLanding onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  if (path === "/login") {return <Logsignpage onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;}
-  return <CBXLanding onNavigate={navigate} theme={theme} onSelectTheme={selectTheme} />;
+  const navigate = (nextPath) => { window.history.pushState({}, "", nextPath); setPath(nextPath); };
+  const pageProps = { onNavigate: navigate, theme, onSelectTheme: selectTheme };
+  if (!PUBLIC_ROUTES.includes(path) && !getToken()) {return <Logsignpage {...pageProps} redirectTo={path} />;}
+  let page;
+  if (path === "/login") page = <Logsignpage {...pageProps} />;
+  else if (ROUTES[path]) { const Page = ROUTES[path]; page = <Page {...pageProps} />; }
+  else page = <CBXLanding {...pageProps} />;
+  const showAI = !PUBLIC_ROUTES.includes(path) && !!getToken();
+  return (
+    <>
+      {page}
+      {showAI && <AiChat onNavigate={navigate} />}
+    </>
+  );
 }

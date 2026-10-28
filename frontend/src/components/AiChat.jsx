@@ -1,66 +1,109 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/api";
 import { authHeaders, clearToken, getToken } from "../api/auth";
-import ThemeButton from "./ThemeButton";
+import { aiPanel, useAIPanelOpen, useAIContext } from "./aiPanelStore";
 
 const MAX_FILES = 5;
 const MAX_FILE_MB = 10;
 const ACCEPTED = "image/*,.csv,.json,.txt,.md";
 
-const newChat = () => ({
-    id: crypto.randomUUID(),
-    title: "New chat",
-    updatedAt: Date.now(),
-    messages: [],
-});
+const newChat = () => ({ id: crypto.randomUUID(), title: "New chat", updatedAt: Date.now(), messages: [] });
+const formatTime = (ts) => new Date(ts).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-const formatTime = (ts) =>
-    new Date(ts).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+const iconBtn = "rounded-md p-1.5 text-[#8b949e] transition hover:bg-[#30363d] hover:text-white";
 
-export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) {
+// Mount this ONCE (in App.jsx), outside your routes, so it shows on every page.
+export default function AIChat({ onNavigate }) {
+    const open = useAIPanelOpen();
     const [chats, setChats] = useState(() => [newChat()]);
     const [activeId, setActiveId] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const dirty = useRef(new Set()); // ids of chats changed since their last save
+    const loaded = useRef(false);
+    const dirty = useRef(new Set());
     const [input, setInput] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(false);
     const [search, setSearch] = useState("");
     const bottomRef = useRef(null);
     const textareaRef = useRef(null);
     const fileInputRef = useRef(null);
     const [attachments, setAttachments] = useState([]);
-
     const activeChat = useMemo(() => chats.find((c) => c.id === activeId) || chats[0], [chats, activeId]);
-
+    const aiContext = useAIContext();
+    const [ctxByChat, setCtxByChat] = useState({});   // chatId -> context
+    const ctxChatId = useRef({});                      // ctx.id -> chatId (reuse chat on re-click)
+    const [copiedKey, setCopiedKey] = useState("");
+    const handledCtx = useRef(0);
+    const copyMessage = async (text, key) => {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            // fallback for non-secure origins
+            const ta = document.createElement("textarea");
+            ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand("copy"); } finally { document.body.removeChild(ta); }
+        }
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey((k) => (k === key ? "" : k)), 1500);
+    };
     const handleAuthError = (err) => {
         if (err.response?.status !== 401) return false;
         clearToken();
+        aiPanel.close();
         onNavigate("/login");
         return true;
     };
 
-    // Load this user's chats from the database
+    // Load chats the first time the panel is opened
     useEffect(() => {
-        if (!getToken()) { onNavigate("/login"); return; }
-        let cancelled = false;
-        api.get("/chats", { headers: authHeaders() })
-            .then(({ data }) => {
-                if (cancelled) return;
-                const saved = data.chats || [];
-                if (saved.length) { setChats(saved); setActiveId(saved[0].id); }
-            })
-            .catch((err) => {
-                if (cancelled || handleAuthError(err)) return;
-                setError("Couldn't load your chats. Is the backend running?");
-            })
-            .finally(() => { if (!cancelled) setIsLoading(false); });
-        return () => { cancelled = true; };
+        if (!open || loaded.current) return;
+        if (!getToken()) { aiPanel.close(); onNavigate("/login"); return; }
+        loaded.current = true;
+        api.get("/chats", { headers: authHeaders() }).then(({ data }) => {
+            const saved = data.chats || [];
+            if (saved.length) { setChats(saved); setActiveId(saved[0].id); }
+        }).catch((err) => {
+            if (handleAuthError(err)) return;
+            loaded.current = false; // allow retry on next open
+            setError("Couldn't load your chats. Is the backend running?");
+        }).finally(() => setIsLoading(false));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [open]);
 
-    // Save changed chats once a reply has finished streaming (never once per token)
+    // Esc closes, focus composer on open
+    useEffect(() => {
+            if (!open) return;
+            const onKey = (e) => { if (e.key === "Escape") aiPanel.close(); };
+            window.addEventListener("keydown", onKey);
+            textareaRef.current?.focus();
+            return () => window.removeEventListener("keydown", onKey);
+        }, [open]);
+
+        useEffect(() => {
+        if (!open || isLoading || !aiContext || handledCtx.current === aiContext.nonce) return;
+        handledCtx.current = aiContext.nonce;
+        const existing = ctxChatId.current[aiContext.id];
+        if (existing && chats.some((c) => c.id === existing)) {
+            setActiveId(existing); setCtxByChat((p) => ({ ...p, [existing]: aiContext }));
+            setHistoryOpen(false); return;
+        }
+        const chat = {
+            ...newChat(),
+            title: aiContext.title || "Model comparison",
+            messages: [{ role: "assistant", content: aiContext.greeting, ts: Date.now() }],
+        };
+        ctxChatId.current[aiContext.id] = chat.id;
+        dirty.current.add(chat.id);
+        setChats((prev) => [chat, ...prev]);
+        setActiveId(chat.id);
+        setCtxByChat((p) => ({ ...p, [chat.id]: aiContext }));
+        setHistoryOpen(false); setError("");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, isLoading, aiContext]);
+
+    // Save changed chats after a reply has finished streaming
     useEffect(() => {
         if (isSending || isLoading) return;
         chats.forEach((chat) => {
@@ -69,24 +112,19 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
             const payload = { ...chat, messages: chat.messages.filter((m) => m.role === "user" || m.content) };
             api.put(`/chats/${chat.id}`, payload, { headers: authHeaders() }).catch((err) => {
                 if (handleAuthError(err)) return;
-                dirty.current.add(chat.id); // retry on the next change
+                dirty.current.add(chat.id);
                 setError("Couldn't save this chat to your account.");
             });
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [chats, isSending, isLoading]);
 
-    // Keep latest message in view
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [activeChat?.messages.length, isSending]);
-
-    // Auto-grow textarea
+    useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [activeChat?.messages.length, isSending, open]);
     useEffect(() => {
         const el = textareaRef.current;
         if (!el) return;
         el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+        el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
     }, [input]);
 
     const filteredChats = useMemo(() => {
@@ -101,25 +139,21 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
     };
 
     const startNewChat = () => {
-        // Reuse an existing empty chat instead of stacking blank ones
         const empty = chats.find((c) => c.messages.length === 0);
-        if (empty) {
-            setActiveId(empty.id);
-        } else {
+        if (empty) setActiveId(empty.id);
+        else {
             const chat = newChat();
             setChats((prev) => [chat, ...prev]);
             setActiveId(chat.id);
         }
-        setError(""); setInput(""); setSidebarOpen(false);
+        setError(""); setInput(""); setHistoryOpen(false);
+        textareaRef.current?.focus();
     };
 
-    const selectChat = (id) => {
-        setActiveId(id); setError(""); setSidebarOpen(false);
-    };
+    const selectChat = (id) => { setActiveId(id); setError(""); setHistoryOpen(false); };
 
     const deleteChat = (id) => {
         dirty.current.delete(id);
-        // Empty chats were never saved, so there is nothing to delete server-side
         if (chats.find((c) => c.id === id)?.messages.length) {
             api.delete(`/chats/${id}`, { headers: authHeaders() }).catch((err) => {
                 if (handleAuthError(err)) return;
@@ -149,18 +183,15 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
 
     const handleFilesChosen = (event) => {
         const chosen = Array.from(event.target.files || []);
-        event.target.value = ""; // allow re-picking the same file
+        event.target.value = "";
         if (!chosen.length) return;
-
         const tooBig = chosen.filter((f) => f.size > MAX_FILE_MB * 1024 * 1024);
         const valid = chosen.filter((f) => f.size <= MAX_FILE_MB * 1024 * 1024);
         const room = MAX_FILES - attachments.length;
         const accepted = valid.slice(0, Math.max(room, 0));
-
         if (tooBig.length) setError(`${tooBig.map((f) => f.name).join(", ")} exceeds ${MAX_FILE_MB} MB.`);
         else if (valid.length > room) setError(`You can attach up to ${MAX_FILES} files per message.`);
         else setError("");
-
         setAttachments((prev) => [
             ...prev,
             ...accepted.map((file) => ({
@@ -172,49 +203,28 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
     };
 
     const removeAttachment = (id) => {
-        setAttachments((prev) => {
-            const target = prev.find((a) => a.id === id);
-            if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-            return prev.filter((a) => a.id !== id);
-        });
-    };
-
-    const sendMessage = async () => {
-        const text = input.trim();
-        if ((!text && !attachments.length) || isSending || isLoading) return;
-
-        const chatId = activeChat.id;
-        const sentFiles = attachments;
-        const userMsg = {
-            role: "user",
-            content: text,
-            ts: Date.now(),
-            attachments: sentFiles.map(({ file }) => ({ name: file.name, isImage: file.type.startsWith("image/") })),
+            setAttachments((prev) => {
+                const target = prev.find((a) => a.id === id);
+                if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+                return prev.filter((a) => a.id !== id);
+            });
         };
-        const history = activeChat.messages.map(({ role, content }) => ({ role, content }));
 
-        updateChat(chatId, (c) => ({
-            ...c,
-            title: c.messages.length === 0 ? (text || sentFiles[0]?.file.name || "New chat").slice(0, 40) : c.title,
-            messages: [...c.messages, userMsg],
-            updatedAt: Date.now(),
-        }));
-        setInput(""); setError(""); setIsSending(true);
-        sentFiles.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
-        setAttachments([]);
-
+    const runReply = async ({ chatId, text, history, files }) => {
+        setError(""); setIsSending(true);
         try {
-            // Always multipart so text-only and file messages share one route.
-            // axios can't read a stream in the browser, so this uses fetch.
             const baseURL = (api.defaults?.baseURL || "http://localhost:8000").replace(/\/$/, "");
             const form = new FormData();
             form.append("message", text);
             form.append("history", JSON.stringify(history));
-            sentFiles.forEach(({ file }) => form.append("files", file));
+            const ctx = ctxByChat[chatId];
+            if (ctx) form.append("context", ctx.text);
+            files.forEach((file) => form.append("files", file));
 
             const res = await fetch(`${baseURL}/chat`, { method: "POST", headers: authHeaders(), body: form });
             if (res.status === 401) {
                 clearToken();
+                aiPanel.close();
                 onNavigate("/login");
                 throw new Error("Session expired. Please log in again.");
             }
@@ -268,6 +278,34 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
         }
     };
 
+    const sendMessage = () => {
+        const text = input.trim();
+        if ((!text && !attachments.length) || isSending || isLoading) return;
+        const chatId = activeChat.id;
+        const sentFiles = attachments;
+        const userMsg = { role: "user", content: text, ts: Date.now(), attachments: sentFiles.map(({ file }) => ({ name: file.name, isImage: file.type.startsWith("image/") })) };
+        const history = activeChat.messages.map(({ role, content }) => ({ role, content }));
+        updateChat(chatId, (c) => ({
+            ...c,
+            title: c.messages.length === 0 ? (text || sentFiles[0]?.file.name || "New chat").slice(0, 40) : c.title,
+            messages: [...c.messages, userMsg],
+            updatedAt: Date.now(),
+        }));
+        setInput("");
+        sentFiles.forEach((a) => a.previewUrl && URL.revokeObjectURL(a.previewUrl));
+        setAttachments([]);
+        runReply({ chatId, text, history, files: sentFiles.map(({ file }) => file) });
+    };
+
+    const regenerate = () => {
+        if (isSending || isLoading) return;
+        const msgs = activeChat.messages;
+        const userIdx = msgs.length - 2;
+        if (msgs.at(-1)?.role !== "assistant" || msgs[userIdx]?.role !== "user") return;
+        const history = msgs.slice(0, userIdx).map(({ role, content }) => ({ role, content }));
+        updateChat(activeChat.id, (c) => ({ ...c, messages: c.messages.slice(0, -1) }));
+        runReply({ chatId: activeChat.id, text: msgs[userIdx].content, history, files: [] });
+    };
     const handleKeyDown = (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -276,175 +314,163 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
     };
 
     return (
-        <div className="t-page page-no-overscroll flex h-screen overflow-hidden overscroll-none font-mono">
-            {/* Mobile backdrop */}
-            {sidebarOpen && (
-                <div className="fixed inset-0 z-20 bg-black/60 md:hidden" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
-            )}
-
-            {/* Sidebar: chat history */}
+        <>
+            {/* Backdrop on mobile only; on desktop the page stays usable behind the panel */}
+            {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={aiPanel.close} aria-hidden="true" />}
             <aside
-                className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col border-r border-[#243724] bg-[#0e140e] transition-transform md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-                aria-label="Chat history"
+                role="dialog"
+                aria-label="AI assistant"
+                aria-hidden={!open}
+                className={`fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l border-[#30363d] bg-[#0d1117] font-sans text-[#c9d1d9] shadow-2xl shadow-black/60 transition-all duration-200 md:w-[min(440px,45vw)] ${open ? "visible translate-x-0" : "invisible translate-x-full"}`}
             >
-                <div className="border-b border-[#243724] p-4">
-                    <p className="t-accent mb-3 text-xs uppercase tracking-[0.3em]">MlForge</p>
-                    <button
-                        type="button"
-                        onClick={startNewChat}
-                        className="w-full rounded-lg border border-[#618c61] bg-[#172617] px-4 py-2 text-sm text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white"
-                    >
-                        + New chat
-                    </button>
-                    <input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search chats..."
-                        aria-label="Search chats"
-                        className="mt-3 w-full rounded-lg border border-[#243724] bg-[#070a07] px-3 py-2 text-xs text-[#d4e6d5] outline-none transition placeholder:text-gray-600 focus:border-[#7aa88a]"
-                    />
-                </div>
-
-                <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#7aa88a]">
-                    {isLoading && <p className="p-3 text-xs text-gray-500">Loading chats...</p>}
-                    {!isLoading && filteredChats.length === 0 && (
-                        <p className="p-3 text-xs text-gray-500">No chats match your search.</p>
-                    )}
-                    {(isLoading ? [] : filteredChats).map((chat) => {
-                        const isActive = chat.id === activeChat.id;
-                        return (
-                            <div
-                                key={chat.id}
-                                className={`group mb-1 flex items-center gap-2 rounded-lg border px-3 py-2 transition ${isActive ? "border-[#618c61] bg-[#172617]" : "border-transparent hover:border-[#243724] hover:bg-[#101a10]"}`}
-                            >
-                                <button type="button" onClick={() => selectChat(chat.id)} className="min-w-0 flex-1 text-left">
-                                    <p className="truncate text-sm text-[#d4e6d5]">{chat.title}</p>
-                                    <p className="mt-0.5 text-[10px] text-gray-500">{formatTime(chat.updatedAt)}</p>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => deleteChat(chat.id)}
-                                    aria-label={`Delete chat ${chat.title}`}
-                                    className="shrink-0 rounded px-1.5 py-0.5 text-xs text-gray-500 transition hover:bg-red-600/20 hover:text-red-300 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        );
-                    })}
-                </nav>
-
-                <div className="border-t border-[#243724] p-3">
-                    <button
-                        type="button"
-                        onClick={clearAll}
-                        className="w-full rounded-lg border border-red-600/60 bg-red-600/10 px-3 py-2 text-xs text-red-300 transition hover:bg-red-600/30"
-                    >
-                        Clear all history
-                    </button>
-                </div>
-            </aside>
-
-            {/* Main chat column */}
-            <section className="flex min-w-0 flex-1 flex-col">
-                <header className="t-card-line flex items-center justify-between gap-3 border-b px-4 py-3 md:px-8">
-                    <div className="flex min-w-0 items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setSidebarOpen(true)}
-                            aria-label="Open chat history"
-                            className="rounded-lg border border-[#243724] px-3 py-2 text-sm text-[#adc9ae] transition hover:border-[#618c61] md:hidden"
-                        >
-                            ☰
-                        </button>
-                        <div className="min-w-0">
-                            <h1 className="text-xl font-bold tracking-tight md:text-2xl">AI Chat</h1>
-                            <p className="truncate text-xs text-gray-500">{activeChat.title}</p>
-                        </div>
+                {/* Header */}
+                <header className="flex items-center justify-between gap-2 border-b border-[#30363d] bg-[#161b22] px-3 py-2.5">
+                    <div className="min-w-0">
+                        <h2 className="text-sm font-semibold text-[#e6edf3]">AI Assistant</h2>
+                        <p className="truncate text-[11px] text-[#8b949e]">{activeChat.title}</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <ThemeButton theme={theme} onSelect={onSelectTheme} />
-                        <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
+                    <div className="flex items-center gap-0.5">
+                        <button type="button" onClick={startNewChat} className={iconBtn} title="New chat" aria-label="New chat">
+                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M7.25 1.75a.75.75 0 0 1 1.5 0V7.25h5.5a.75.75 0 0 1 0 1.5H8.75v5.5a.75.75 0 0 1-1.5 0V8.75H1.75a.75.75 0 0 1 0-1.5h5.5V1.75Z" /></svg>
+                        </button>
+                        <button type="button" onClick={() => setHistoryOpen((v) => !v)} className={`${iconBtn} ${historyOpen ? "bg-[#30363d] text-white" : ""}`} title="Chat history" aria-label="Chat history" aria-pressed={historyOpen}>
+                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0ZM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm.75 4.75a.75.75 0 0 0-1.5 0v3.5c0 .2.08.39.22.53l2 2a.75.75 0 1 0 1.06-1.06L8.75 7.94V4.75Z" /></svg>
+                        </button>
+                        <button type="button" onClick={aiPanel.close} className={iconBtn} title="Close (Esc)" aria-label="Close AI assistant">
+                            <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" /></svg>
+                        </button>
                     </div>
                 </header>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth md:px-8">
-                    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-                        {activeChat.messages.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-[#243724] p-6 text-sm text-gray-500">
-                                Ask about your data, a model choice, or an error in your pipeline. Press Enter to send, Shift+Enter for a new line.
+                <div className="relative flex min-h-0 flex-1 flex-col">
+                    {/* History overlay */}
+                    {historyOpen && (
+                        <div className="absolute inset-0 z-10 flex flex-col bg-[#0d1117]">
+                            <div className="border-b border-[#30363d] p-3">
+                                <input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search chats..."
+                                    aria-label="Search chats"
+                                    className="w-full rounded-md border border-[#30363d] bg-[#010409] px-3 py-1.5 text-xs text-[#c9d1d9] outline-none placeholder:text-[#6e7681] focus:border-[#388bfd]"
+                                />
                             </div>
-                        )}
+                            <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#7aa88a]">
+                                {isLoading && <p className="p-3 text-xs text-[#8b949e]">Loading chats...</p>}
+                                {!isLoading && filteredChats.length === 0 && <p className="p-3 text-xs text-[#8b949e]">No chats match your search.</p>}
+                                {(isLoading ? [] : filteredChats).map((chat) => {
+                                    const isActive = chat.id === activeChat.id;
+                                    return (
+                                        <div key={chat.id} className={`group mb-1 flex items-center gap-2 rounded-md px-3 py-2 transition ${isActive ? "bg-[#1f6feb]/15" : "hover:bg-[#161b22]"}`}>
+                                            <button type="button" onClick={() => selectChat(chat.id)} className="min-w-0 flex-1 text-left">
+                                                <p className="truncate text-sm text-[#e6edf3]">{chat.title}</p>
+                                                <p className="mt-0.5 text-[10px] text-[#8b949e]">{formatTime(chat.updatedAt)}</p>
+                                            </button>
+                                            <button type="button" onClick={() => deleteChat(chat.id)} aria-label={`Delete chat ${chat.title}`} className="shrink-0 rounded px-1.5 py-0.5 text-xs text-[#8b949e] transition hover:bg-red-600/20 hover:text-red-300 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100">✕</button>
+                                        </div>
+                                    );
+                                })}
+                            </nav>
+                            <div className="border-t border-[#30363d] p-3">
+                                <button type="button" onClick={clearAll} className="w-full rounded-md border border-[#f85149]/40 px-3 py-1.5 text-xs text-[#f85149] transition hover:bg-[#f85149]/10">Clear all history</button>
+                            </div>
+                        </div>
+                    )}
 
-                        {activeChat.messages.map((msg, i) => {
-                            const isUser = msg.role === "user";
-                            if (!isUser && !msg.content) return null;
-                            return (
-                                <div key={i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-                                    <div
-                                        className={`max-w-[85%] rounded-xl border px-4 py-3 text-sm leading-6 ${isUser ? "border-[#618c61] bg-[#172617] text-[#d4e6d5]" : "border-[#243724] bg-[#101a10] text-[#d4e6d5]"}`}
-                                    >
-                                        <p className="mb-1 text-[10px] uppercase tracking-wide text-[#adc9ae]">{isUser ? "You" : "Assistant"}</p>
-                                        {msg.attachments?.length > 0 && (
-                                            <div className="mb-2 flex flex-wrap gap-1.5">
-                                                {msg.attachments.map((a, j) => (
-                                                    <span key={j} className="max-w-[12rem] truncate rounded border border-[#243724] bg-[#0e140e] px-2 py-1 text-xs text-[#adc9ae]">
-                                                        {a.isImage ? "🖼" : "📄"} {a.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+                        <div className="flex flex-col gap-4">
+                            {activeChat.messages.length === 0 && (
+                                <div className="rounded-md border border-[#30363d] bg-[#161b22] p-4 text-sm leading-6 text-[#8b949e]">
+                                    <p className="font-semibold text-[#e6edf3]">How can I help?</p>
+                                    <p className="mt-1">Ask about your data, a model choice, or an error in your pipeline. Enter to send, Shift+Enter for a new line.</p>
+                                </div>
+                            )}
+
+                            {activeChat.messages.map((msg, i) => {
+                                const isUser = msg.role === "user";
+                                if (!isUser && !msg.content) return null;
+                                return (
+                                    <div key={i} className="text-sm leading-6">
+                                        <p className="mb-1 text-xs font-semibold text-[#e6edf3]">{isUser ? "You" : "Assistant"}</p>
+                                        <div className={isUser ? "rounded-md border border-[#30363d] bg-[#161b22] px-3 py-2" : "px-0.5"}>
+                                            {msg.attachments?.length > 0 && (
+                                                <div className="mb-2 flex flex-wrap gap-1.5">
+                                                    {msg.attachments.map((a, j) => (
+                                                        <span key={j} className="max-w-[12rem] truncate rounded-md border border-[#30363d] bg-[#0d1117] px-2 py-1 text-xs text-[#8b949e]">
+                                                            {a.isImage ? "🖼" : "📄"} {a.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
+                                        </div>
+                                        {!isUser && msg.content && !(isSending && i === activeChat.messages.length - 1) && (() => {
+                                            const key = `${activeChat.id}-${i}`;
+                                            const prev = activeChat.messages[i - 1];
+                                            const canRegenerate = i === activeChat.messages.length - 1 && prev?.role === "user" && prev.content && !prev.attachments?.length;
+                                            const btn = "rounded-md p-1 text-[#8b949e] transition hover:bg-[#30363d] hover:text-white";
+                                            return (
+                                                <div className="mt-1 flex items-center gap-0.5">
+                                                    <button type="button" onClick={() => copyMessage(msg.content, key)} className={btn} title={copiedKey === key ? "Copied" : "Copy"} aria-label="Copy response">
+                                                        {copiedKey === key
+                                                            ? <svg viewBox="0 0 16 16" width="14" height="14" fill="#3fb950"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" /></svg>
+                                                            : <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M0 6.75C0 5.78.78 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .14.11.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .78 5.78 0 6.75 0h7.5C15.22 0 16 .78 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .14.11.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" /></svg>}
+                                                    </button>
+                                                    {canRegenerate && (
+                                                        <button type="button" onClick={regenerate} className={btn} title="Regenerate" aria-label="Regenerate response">
+                                                            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z" /></svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
 
-                        {isSending && (activeChat.messages.at(-1)?.role === "user" || !activeChat.messages.at(-1)?.content) && (
-                            <div className="flex justify-start">
-                                <div className="rounded-xl border border-[#243724] bg-[#101a10] px-4 py-3 text-sm text-gray-400" role="status">
-                                    Thinking...
-                                </div>
+                            {isSending && (activeChat.messages.at(-1)?.role === "user" || !activeChat.messages.at(-1)?.content) && (
+                                <p className="animate-pulse text-xs text-[#8b949e]" role="status">Thinking...</p>
+                            )}
+                            <div ref={bottomRef} />
+                        </div>
+                    </div>
+
+                    {/* Composer */}
+                    <div className="border-t border-[#30363d] bg-[#0d1117] p-3">
+                        {ctxByChat[activeChat.id] && (
+                            <div className="mb-2 flex items-center gap-2 text-[11px] text-[#8b949e]">
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-[#30363d] bg-[#161b22] px-2.5 py-1">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#3fb950]" />
+                                    Context: {ctxByChat[activeChat.id].label}
+                                    <button type="button" aria-label="Remove context" className="ml-1 hover:text-white"
+                                        onClick={() => setCtxByChat(({ [activeChat.id]: _, ...rest }) => rest)}>✕</button>
+                                </span>
                             </div>
                         )}
-                        <div ref={bottomRef} />
-                    </div>
-                </div>
-
-                {/* Composer */}
-                <div className="border-t border-[#243724] px-4 py-4 md:px-8">
-                    <div className="mx-auto max-w-3xl">
-                        {error && <p role="alert" className="mb-2 text-sm text-red-400">{error}</p>}
+                        {error && <p role="alert" className="mb-2 text-xs text-[#f85149]">{error}</p>}
                         <input ref={fileInputRef} type="file" multiple accept={ACCEPTED} className="hidden" onChange={handleFilesChosen} />
                         {attachments.length > 0 && (
                             <div className="mb-2 flex flex-wrap gap-2">
                                 {attachments.map(({ id, file, previewUrl }) => (
-                                    <div key={id} className="relative flex max-w-[12rem] items-center gap-2 rounded-lg border border-[#243724] bg-[#101a10] p-1.5 pr-7">
+                                    <div key={id} className="relative flex max-w-[11rem] items-center gap-2 rounded-md border border-[#30363d] bg-[#161b22] p-1.5 pr-6">
                                         {previewUrl
-                                            ? <img src={previewUrl} alt={file.name} className="h-10 w-10 shrink-0 rounded object-cover" />
-                                            : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[#172617] text-lg">📄</span>}
-                                        <span className="truncate text-xs text-[#d4e6d5]">{file.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(id)}
-                                            aria-label={`Remove ${file.name}`}
-                                            className="absolute right-1 top-1 rounded px-1 text-xs text-gray-500 transition hover:bg-red-600/20 hover:text-red-300"
-                                        >
-                                            ✕
-                                        </button>
+                                            ? <img src={previewUrl} alt={file.name} className="h-8 w-8 shrink-0 rounded object-cover" />
+                                            : <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#21262d] text-base">📄</span>}
+                                        <span className="truncate text-xs text-[#c9d1d9]">{file.name}</span>
+                                        <button type="button" onClick={() => removeAttachment(id)} aria-label={`Remove ${file.name}`} className="absolute right-1 top-1 rounded px-1 text-xs text-[#8b949e] transition hover:bg-red-600/20 hover:text-red-300">✕</button>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <div className="flex items-end gap-3 rounded-xl border border-[#243724] bg-[#0e140e]/80 p-3 focus-within:border-[#7aa88a]">
+                        <div className="flex items-end gap-2 rounded-md border border-[#30363d] bg-[#010409] p-2 focus-within:border-[#388bfd]">
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isSending || isLoading || attachments.length >= MAX_FILES}
                                 aria-label="Attach files or images"
                                 title="Attach files or images"
-                                className="shrink-0 rounded-lg border border-[#618c61] bg-[#172617] px-3 py-2 text-sm text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                className="shrink-0 rounded-md border border-[#30363d] bg-[#21262d] px-2.5 py-1.5 text-sm text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 +
                             </button>
@@ -454,22 +480,22 @@ export default function AIChat({ onNavigate, theme = "forest", onSelectTheme }) 
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 rows={1}
-                                placeholder="Message the assistant..."
+                                placeholder="Ask the assistant..."
                                 aria-label="Chat message"
-                                className="max-h-40 flex-1 resize-none bg-transparent text-sm leading-6 text-[#d4e6d5] outline-none placeholder:text-gray-600"
+                                className="max-h-36 flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-[#c9d1d9] outline-none placeholder:text-[#6e7681]"
                             />
                             <button
                                 type="button"
                                 onClick={sendMessage}
                                 disabled={isSending || isLoading || (!input.trim() && !attachments.length)}
-                                className="shrink-0 rounded-lg border border-red-500 bg-red-400/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-400/30 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="shrink-0 rounded-md bg-[#238636] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#2ea043] disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {isSending ? "Sending..." : "Send"}
+                                {isSending ? "..." : "Send"}
                             </button>
                         </div>
                     </div>
                 </div>
-            </section>
-        </div>
+            </aside>
+        </>
     );
 }
