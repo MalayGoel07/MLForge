@@ -410,7 +410,7 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
                         <button type="button" onClick={restartKernel} disabled={kernelStatus !== "ready"} className={toolbarBtn}>Restart kernel</button>
                         <button type="button" onClick={clearOutputs} className={toolbarBtn}>Clear outputs</button>
                         <button type="button" onClick={exportNotebook} className={toolbarBtn}>Export .ipynb</button>
-                        <button type="button" onClick={() => shareWithAI()} disabled={!hasCode} className={toolbarBtn}>✦ Context AI</button>
+                        <button type="button" onClick={() => shareWithAI()} disabled={!files.length} className={toolbarBtn}>✦ Context AI</button>
                         <span className={`ml-auto rounded border px-2 py-1 text-[10px] ${badge.className}`}>{badge.label}</span>
                     </div>
 
@@ -446,7 +446,7 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
                                 <div className="flex items-center justify-between border-b border-[#243724] bg-[#0e140e] px-3 py-1.5">
                                     <span className="text-xs text-gray-500">In [{running ? "*" : queued ? "…" : cell.count ?? " "}]</span>
                                     <div className="flex items-center gap-1">
-                                        <button type="button" onClick={() => shareWithAI(cell.id)} disabled={!cell.code.trim()}
+                                        <button type="button" onClick={() => shareWithAI(cell.id)}
                                             className={`rounded border px-3 py-1 text-xs transition disabled:opacity-40 ${cell.status === "error" ? "border-red-800 text-red-300 hover:bg-red-600/20" : "border-[#243724] text-[#adc9ae] hover:border-[#618c61]"}`}>
                                             {cell.status === "error" ? "Fix with AI" : "Ask AI"}
                                         </button>

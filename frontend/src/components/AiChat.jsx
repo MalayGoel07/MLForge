@@ -61,6 +61,7 @@ export default function AIChat({ onNavigate }) {
     const loaded = useRef(false);
     const dirty = useRef(new Set());
     const [input, setInput] = useState("");
+    const [selectedProvider, setSelectedProvider] = useState("ollama");
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
     const [historyOpen, setHistoryOpen] = useState(false);
@@ -258,6 +259,7 @@ export default function AIChat({ onNavigate }) {
             const form = new FormData();
             form.append("message", text);
             form.append("history", JSON.stringify(history));
+            form.append("provider", selectedProvider);
             const ctx = ctxByChat[chatId];
             if (ctx) form.append("context", ctx.text);
             files.forEach((file) => form.append("files", file));
@@ -525,6 +527,16 @@ export default function AIChat({ onNavigate }) {
                                 aria-label="Chat message"
                                 className="max-h-36 flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-[#c9d1d9] outline-none placeholder:text-[#6e7681]"
                             />
+                            <select
+                                value={selectedProvider}
+                                onChange={(e) => setSelectedProvider(e.target.value)}
+                                disabled={isSending || isLoading}
+                                className="shrink-0 rounded-md border border-[#30363d] bg-[#21262d] px-2.5 py-1.5 text-sm text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label="AI provider"
+                            >
+                                <option value="ollama">Ollama — Local AI</option>
+                                <option value="gemini">Google Gemini</option>
+                            </select>
                             <button
                                 type="button"
                                 onClick={sendMessage}
