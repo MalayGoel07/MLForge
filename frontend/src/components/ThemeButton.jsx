@@ -57,7 +57,7 @@ export default function ThemeButton({ theme, onSelect, className = "" }) {
 
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
-    <AIButton />
+    {window.location.pathname !== "/" && <AIButton />}
     <div ref={boxRef} className={`relative inline-block ${className}`}>
       <button
         type="button"

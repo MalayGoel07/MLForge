@@ -57,9 +57,9 @@ export default function App() {
   }, []);
 
   const navigate = (nextPath) => {
-    if (nextPath !== window.location.pathname) window.history.pushState({}, "", nextPath);
+    if (nextPath !== window.location.pathname) {window.history.pushState({}, "", nextPath);}
     setPath(nextPath);
-    rerender(); // same-path navigations (e.g. /home -> /home after login) still re-render
+    rerender();
   };
 
   const pageProps = { onNavigate: navigate, theme, onSelectTheme: selectTheme };
@@ -73,7 +73,7 @@ export default function App() {
   else if (ROUTES[path]) { const Page = ROUTES[path]; page = <Page {...pageProps} />; }
   else page = <CBXLanding {...pageProps} />;
 
-  const showAI = !PUBLIC_ROUTES.includes(path) && !!getToken();
+  const showAI = path !== "/" && path !== "/login" && !!getToken();
 
   return (
     <>
