@@ -172,8 +172,23 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
     const queueRef = useRef(Promise.resolve());
     const runCount = useRef(0);
     const fileInputRef = useRef(null);
-    useEffect(() => {cellsRef.current = cells;}, [cells]);
 
+    const updateCell = (id, patch) => setCells((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+
+    const focusCell = (id) => setTimeout(() => document.querySelector(`[data-cell="${id}"]`)?.focus(), 0);
+
+    const addCell = (afterIndex, code = "") => {
+        const cell = newCell(code);
+        setCells((cs) => {
+            const next = [...cs];
+            next.splice(afterIndex + 1, 0, cell);
+            return next;
+        });
+        focusCell(cell.id);
+    };
+
+    useEffect(() => {cellsRef.current = cells;}, [cells]);
+    
     const isBusy = cells.some((c) => c.status === "running" || c.status === "queued");
     useEffect(() => {
         let cancelled = false;
@@ -194,15 +209,22 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
         };
     }, [kernelAttempt]);
 
+    useEffect(() => {
+        aiPanel.setInsertHandler((code) => {
+            const list = cellsRef.current;
+            const last = list[list.length - 1];
+            if (last && !last.code.trim()) { updateCell(last.id, { code }); focusCell(last.id); }
+            else addCell(list.length - 1, code);
+        });
+        return () => aiPanel.setInsertHandler(null);   // button disappears when you leave the page
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const retryKernel = () => {
         setKernelStatus("loading");
         setKernelError("");
         setKernelAttempt((n) => n + 1);
     };
-
-    const updateCell = (id, patch) => setCells((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-
-    const focusCell = (id) => setTimeout(() => document.querySelector(`[data-cell="${id}"]`)?.focus(), 0);
 
     const execute = async (id) => {
         const py = pyRef.current;
@@ -230,16 +252,6 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
     };
 
     const runAll = () => cellsRef.current.forEach((c) => enqueue(c.id));
-
-    const addCell = (afterIndex, code = "") => {
-        const cell = newCell(code);
-        setCells((cs) => {
-            const next = [...cs];
-            next.splice(afterIndex + 1, 0, cell);
-            return next;
-        });
-        focusCell(cell.id);
-    };
 
     const deleteCell = (id) => setCells((cs) => (cs.length === 1 ? [newCell()] : cs.filter((c) => c.id !== id)));
 
@@ -371,10 +383,8 @@ export default function MLNotebook({ onNavigate, theme = "forest", onSelectTheme
     };
     const badge = kernelBadge();
 
-    const toolbarBtn =
-        "rounded-lg border border-[#243724] bg-[#101a10] px-3 py-2 text-xs text-[#d4e6d5] transition hover:border-[#618c61] disabled:cursor-not-allowed disabled:opacity-50";
+    const toolbarBtn ="rounded-lg border border-[#243724] bg-[#101a10] px-3 py-2 text-xs text-[#d4e6d5] transition hover:border-[#618c61] disabled:cursor-not-allowed disabled:opacity-50";
     const iconBtn = "rounded border border-transparent px-2 py-1 text-xs text-gray-500 transition hover:border-[#243724] hover:text-[#d4e6d5] disabled:opacity-30";
-
     return (
         <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
             <style>{NOTEBOOK_STYLES}</style>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/api";
 import { authHeaders, clearToken, getToken } from "../api/auth";
-import { aiPanel, useAIPanelOpen, useAIContext } from "./aiPanelStore";
+import { aiPanel, useAIPanelOpen, useAIContext, useInsertHandler } from "./aiPanelStore";
 
 const MAX_FILES = 5;
 const MAX_FILE_MB = 10;
@@ -12,6 +12,46 @@ const formatTime = (ts) => new Date(ts).toLocaleString([], { month: "short", day
 
 const iconBtn = "rounded-md p-1.5 text-[#8b949e] transition hover:bg-[#30363d] hover:text-white";
 
+// Split a reply into text and ```fenced``` code segments (works on half-streamed replies too)
+const parseBlocks = (text) => {
+    const out = [];
+    const re = /```(\w*)\n?([\s\S]*?)(```|$)/g;
+    let last = 0, m;
+    while ((m = re.exec(text))) {
+        if (m.index > last) out.push({ type: "text", content: text.slice(last, m.index) });
+        out.push({ type: "code", lang: m[1], content: m[2].replace(/\n$/, ""), closed: m[3] === "```" });
+        last = re.lastIndex;
+    }
+    if (last < text.length) out.push({ type: "text", content: text.slice(last) });
+    return out;
+};
+
+function CodeBlock({ lang, code, closed, canInsert, onInsert }) {
+    const [copied, setCopied] = useState(false);
+    const [inserted, setInserted] = useState(false);
+    const flash = (set) => { set(true); setTimeout(() => set(false), 1500); };
+    const copy = async () => { try { await navigator.clipboard.writeText(code); flash(setCopied); } catch { /* clipboard blocked */ } };
+    const isPython = ["", "python", "py"].includes(lang.toLowerCase());
+    const btn = "rounded px-2 py-0.5 text-[11px] text-[#8b949e] transition hover:bg-[#30363d] hover:text-white";
+    return (
+        <div className="my-2 overflow-hidden rounded-md border border-[#30363d] bg-[#010409]">
+            <div className="flex items-center justify-between border-b border-[#30363d] bg-[#161b22] px-3 py-1">
+                <span className="text-[11px] text-[#8b949e]">{lang || "code"}</span>
+                {closed && (
+                    <div className="flex items-center gap-1">
+                        <button type="button" onClick={copy} className={btn}>{copied ? "Copied" : "Copy"}</button>
+                        {canInsert && isPython && (
+                            <button type="button" onClick={() => { onInsert(code); flash(setInserted); }} className={`${btn} !text-[#3fb950]`}>
+                                {inserted ? "Inserted ✓" : "Insert into notebook"}
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+            <pre className="overflow-x-auto p-3 text-xs leading-5 text-[#e6edf3]"><code>{code}</code></pre>
+        </div>
+    );
+}
 // Mount this ONCE (in App.jsx), outside your routes, so it shows on every page.
 export default function AIChat({ onNavigate }) {
     const open = useAIPanelOpen();
@@ -31,6 +71,7 @@ export default function AIChat({ onNavigate }) {
     const [attachments, setAttachments] = useState([]);
     const activeChat = useMemo(() => chats.find((c) => c.id === activeId) || chats[0], [chats, activeId]);
     const aiContext = useAIContext();
+    const insertHandler = useInsertHandler();
     const [ctxByChat, setCtxByChat] = useState({});   // chatId -> context
     const ctxChatId = useRef({});                      // ctx.id -> chatId (reuse chat on re-click)
     const [copiedKey, setCopiedKey] = useState("");
@@ -403,7 +444,7 @@ export default function AIChat({ onNavigate }) {
                                                     ))}
                                                 </div>
                                             )}
-                                            {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
+                                            {msg.content && (isUser ? <p className="whitespace-pre-wrap break-words">{msg.content}</p> : parseBlocks(msg.content).map((b, k) => b.type === "code"? <CodeBlock key={k} lang={b.lang} code={b.content} closed={b.closed} canInsert={!!insertHandler} onInsert={insertHandler} />: b.content.trim() && <p key={k} className="whitespace-pre-wrap break-words">{b.content.trim()}</p>))}
                                         </div>
                                         {!isUser && msg.content && !(isSending && i === activeChat.messages.length - 1) && (() => {
                                             const key = `${activeChat.id}-${i}`;
