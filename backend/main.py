@@ -264,6 +264,7 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
     except (json.JSONDecodeError, TypeError, ValidationError):
         raise HTTPException(400, "Invalid chat history.")
 
+# ---------- file ----------
     images: List[bytes] = []
     image_parts = []
     file_blocks: List[str] = []
@@ -275,10 +276,7 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         ext = Path(name).suffix.lower()
         if (f.content_type or "").startswith("image/"):
             images.append(data)
-            image_parts.append({
-                "mime_type": f.content_type,
-                "data": base64.b64encode(data).decode("ascii"),
-            })
+            image_parts.append({"mime_type": f.content_type,"data": base64.b64encode(data).decode("ascii"),})
         elif ext in TEXT_EXTS:
             body = data.decode("utf-8", errors="replace")
             note = "\n[truncated]" if len(body) > MAX_TEXT_CHARS else ""
@@ -286,6 +284,7 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         else:
             raise HTTPException(415, f"Unsupported file type: {name}")
 
+# ---------- text/image bytes ----------
     text = message.strip()
     if not text and not (images or file_blocks):
         raise HTTPException(422, "Enter a message or attach a file.")
@@ -295,19 +294,18 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
     user_msg = {"role": "user", "content": text + ("\n\n" + "\n\n".join(file_blocks) if file_blocks else "")}
     if images:
         user_msg["images"] = images
-
+# ---------- context+ ----------
     system = SYSTEM_PROMPT
     if current_user.system_prompt and current_user.system_prompt.strip():
         system += "\n\n" + current_user.system_prompt.strip()
     if context.strip():
         system += f"\n\n{CONTEXT_INSTRUCTIONS}\n<context>\n{context.strip()[:MAX_CONTEXT_CHARS]}\n</context>"
 
-    messages = (
-        [{"role": "system", "content": system}]
-        + [{"role": m.role, "content": m.content} for m in past[-MAX_HISTORY_MESSAGES:]]
-        + [user_msg]
-    )
+    messages = ([{"role": "system", "content": system}]+ [{"role": m.role, "content": m.content} for m in past[-MAX_HISTORY_MESSAGES:]]+ [user_msg])
     requested = model.strip()
+
+# ---------- check gemini req ----------
+
     is_gemini = requested == GEMINI_MODEL_OPTION
     if requested and not is_gemini:
         try:
@@ -322,10 +320,11 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         raise HTTPException(503, "Gemini is not configured. Set GEMINI_API_KEY in .env.")
 
     if images:
-        # use the picked model if it can see images, else fall back to the env vision model
         use_model = requested if is_gemini or (requested and has_vision(requested)) else M_VISION
     else:
         use_model = requested or M_CODER
+
+# ---------- generation ----------
 
     def generate():
         if not use_model:
@@ -336,29 +335,16 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
             if use_model == GEMINI_MODEL_OPTION:
                 gemini_contents = []
                 for message in messages:
-                    if message["role"] == "system":
-                        continue
+                    if message["role"] == "system": continue
                     parts = [{"text": message["content"]}]
                     if message["role"] == "user" and message is messages[-1]:
                         parts.extend({"inline_data": image} for image in image_parts)
-                    gemini_contents.append({
-                        "role": "model" if message["role"] == "assistant" else "user",
-                        "parts": parts,
-                    })
-                with httpx.stream(
-                    "POST",
-                    f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:streamGenerateContent",
-                    params={"key": gemini_api_key, "alt": "sse"},
-                    json={
-                        "system_instruction": {"parts": [{"text": system}]},
-                        "contents": gemini_contents,
-                    },
-                    timeout=120,
-                ) as response:
+                    gemini_contents.append({"role": "model" if message["role"] == "assistant" else "user","parts": parts,})
+
+                with httpx.stream("POST",f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:streamGenerateContent",params={"key": gemini_api_key, "alt": "sse"},json={"system_instruction": {"parts": [{"text": system}]},"contents": gemini_contents,},timeout=120,) as response:
                     response.raise_for_status()
                     for line in response.iter_lines():
-                        if not line.startswith("data:"):
-                            continue
+                        if not line.startswith("data:"): continue
                         payload = json.loads(line[5:].strip())
                         candidates = payload.get("candidates", [])
                         parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
@@ -367,20 +353,17 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
                                 yield sse({"t": part["text"]})
                 yield "data: [DONE]\n\n"
                 return
-            stream = client.chat(
-                model=use_model, messages=messages, stream=True, keep_alive="1m",
-                options={"temperature": 0.5, "num_predict": NUM_PREDICT},
-            )
+            
+# ---------- streaming ----------
+
+            stream = client.chat(model=use_model, messages=messages, stream=True, keep_alive="1m",options={"temperature": 0.5, "num_predict": NUM_PREDICT},)
             for chunk in stream:
                 message = chunk.get("message") if isinstance(chunk, dict) else getattr(chunk, "message", None)
-                content = (
-                    message.get("content", "")
-                    if isinstance(message, dict)
-                    else getattr(message, "content", "")
-                )
+                content = ( message.get("content", "") if isinstance(message, dict) else getattr(message, "content", ""))
                 if content:
                     yield sse({"t": content})
             yield "data: [DONE]\n\n"
+
         except Exception:
             import logging
             logging.exception("Chat generation failed")
@@ -389,11 +372,7 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
+        headers={"Cache-Control": "no-cache","Connection": "keep-alive","X-Accel-Buffering": "no",},
     )
 
 if __name__ == "__main__":
