@@ -3,7 +3,6 @@ import json
 import os
 import sys
 import time
-from datetime import timedelta
 from pathlib import Path
 from typing import Annotated, List, Literal
 
@@ -26,7 +25,7 @@ if __package__ in (None, ""):
 from backend.db import chats_collection, users_collection
 from backend.ml.MlLogic import ml_router
 from backend.ml.clean_router import router as clean_router 
-from backend.security import ( ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserSignup, authenticate_user, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
+from backend.security import ( Token, User, UserSignup, authenticate_user, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
 
 frontend_url = os.getenv("frontend_url")
 
@@ -164,10 +163,7 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(401, "Incorrect username or password")
-    token = create_access_token(
-        data={"sub": user.username},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
+    token = create_access_token(data={"sub": user.username})
     return Token(access_token=token, token_type="bearer")
 
 
@@ -185,10 +181,7 @@ def signup(user: UserSignup) -> Token:
         )
     except DuplicateKeyError:
         raise HTTPException(400, "Username already exists")
-    token = create_access_token(
-        data={"sub": user.username},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
+    token = create_access_token(data={"sub": user.username})
     return Token(access_token=token, token_type="bearer")
 
 

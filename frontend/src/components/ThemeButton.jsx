@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect, useRef, useState } from "react";
 import AIButton from "./AIButton";
+import { aiPanel } from "./aiPanelStore";
+import { getToken } from "../api/auth";
 export const THEME_KEY = "mlforge-theme";
 
 export const THEMES = [
@@ -58,6 +60,17 @@ export default function ThemeButton({ theme, onSelect, className = "" }) {
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
     {window.location.pathname !== "/" && <AIButton />}
+    {window.location.pathname !== "/" && getToken() && (
+      <button
+        type="button"
+        onClick={aiPanel.openSettings}
+        aria-label="Settings"
+        title="Settings"
+        className="inline-flex items-center justify-center rounded-full border border-line bg-card-soft px-3 py-1.5 text-xs font-medium text-acc transition hover:opacity-80"
+      >
+        ⚙ <span className="hidden sm:inline">Settings</span>
+      </button>
+    )}
     <div ref={boxRef} className={`relative inline-block ${className}`}>
       <button
         type="button"

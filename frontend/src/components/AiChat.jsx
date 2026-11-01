@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../api/api";
 import { authHeaders, clearToken, getToken } from "../api/auth";
-import { aiPanel, useAIPanelOpen, useAIContext, useInsertHandler } from "./aiPanelStore";
+import { aiPanel, useAIPanelOpen, useAIContext, useInsertHandler, useSettingsRequest } from "./aiPanelStore";
 
 const MAX_FILES = 5;
 const MAX_FILE_MB = 10;
@@ -73,6 +73,7 @@ export default function AIChat({ onNavigate }) {
     const activeChat = useMemo(() => chats.find((c) => c.id === activeId) || chats[0], [chats, activeId]);
     const aiContext = useAIContext();
     const insertHandler = useInsertHandler();
+    const settingsRequest = useSettingsRequest();
     const [ctxByChat, setCtxByChat] = useState({});   // chatId -> context
     const ctxChatId = useRef({});                      // ctx.id -> chatId (reuse chat on re-click)
     const [copiedKey, setCopiedKey] = useState("");
@@ -126,6 +127,11 @@ export default function AIChat({ onNavigate }) {
         }
     };
 
+    useEffect(() => {
+        if (settingsRequest) openSettings();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [settingsRequest]);
+
     const saveSettings = async (event) => {
         event.preventDefault();
         setSettingsSaving(true);
@@ -165,6 +171,12 @@ export default function AIChat({ onNavigate }) {
             if (handleAuthError(err)) return;
             setSettingsError(err.message || "Couldn't delete your account.");
         }
+    };
+
+    const logout = () => {
+        clearToken();
+        aiPanel.close();
+        onNavigate("/login");
     };
 
     const copyMessage = async (text, key) => {
@@ -484,9 +496,6 @@ export default function AIChat({ onNavigate }) {
                         <button type="button" onClick={aiPanel.close} className={iconBtn} title="Close (Esc)" aria-label="Close AI assistant">
                             <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" /></svg>
                         </button>
-                        <button type="button" onClick={openSettings} className={iconBtn} title="Settings" aria-label="Settings">
-                            ⚙
-                        </button>
                     </div>
                 </header>
 
@@ -575,6 +584,11 @@ export default function AIChat({ onNavigate }) {
                                 </button>
                             </form>
                             <div className="mt-8 border-t border-[#30363d] pt-4">
+                                <button type="button" onClick={logout} className="w-full rounded-md border border-[#30363d] px-3 py-2 text-xs font-semibold text-[#c9d1d9] transition hover:bg-[#21262d]">
+                                    Log out
+                                </button>
+                            </div>
+                            <div className="mt-4 border-t border-[#30363d] pt-4">
                                 <h4 className="text-xs font-semibold text-[#f85149]">Danger zone</h4>
                                 <p className="mt-1 text-xs text-[#8b949e]">Deletes your account, API key, and saved chats permanently.</p>
                                 <button type="button" onClick={deleteAccount} className="mt-3 rounded-md border border-[#f85149]/60 px-3 py-2 text-xs text-[#f85149] hover:bg-[#f85149]/10">
