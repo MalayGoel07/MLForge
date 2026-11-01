@@ -78,22 +78,27 @@ export default function AIChat({ onNavigate }) {
     const [copiedKey, setCopiedKey] = useState("");
     const handledCtx = useRef(0);
 
-    // ---------- local model picker ----------
+    // ---------- AI model picker ----------
     const [localModels, setLocalModels] = useState([]);
     const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("ai_model") || "");
     const [modelsError, setModelsError] = useState("");
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settings, setSettings] = useState({ full_name: "", system_prompt: "", gemini_api_key: "", gemini_api_key_set: false, clear_gemini_api_key: false });
+    const [settingsSaving, setSettingsSaving] = useState(false);
+    const [settingsError, setSettingsError] = useState("");
+    const [settingsNotice, setSettingsNotice] = useState("");
 
     const loadModels = async () => {
         try {
             const { data } = await api.get("/ai/models");
             const names = (data.models || []).filter((m) => typeof m === "string");
             setLocalModels(names);
-            setModelsError(names.length ? "" : "No local models found. Run: ollama pull <model>");
+            setModelsError(names.length ? "" : "No models found. Configure Ollama or GEMINI_API_KEY.");
             // keep the saved choice if it's still installed, otherwise fall back to the default
             setSelectedModel((cur) => (names.includes(cur) ? cur : data.default || ""));
         } catch {
             setLocalModels([]);
-            setModelsError("Can't reach Ollama. Is it running?");
+            setModelsError("Can't load models. Check Ollama or the backend configuration.");
         }
     };
 
@@ -107,6 +112,60 @@ export default function AIChat({ onNavigate }) {
     useEffect(() => {
         if (selectedModel) localStorage.setItem("ai_model", selectedModel);
     }, [selectedModel]);
+
+    const openSettings = async () => {
+        setSettingsOpen(true);
+        setSettingsError("");
+        setSettingsNotice("");
+        try {
+            const { data } = await api.get("/me", { headers: authHeaders() });
+            setSettings((current) => ({ ...current, ...data, gemini_api_key: "", clear_gemini_api_key: false }));
+        } catch (err) {
+            if (handleAuthError(err)) return;
+            setSettingsError("Couldn't load your settings.");
+        }
+    };
+
+    const saveSettings = async (event) => {
+        event.preventDefault();
+        setSettingsSaving(true);
+        setSettingsError("");
+        setSettingsNotice("");
+        try {
+            await api.put("/me", {
+                full_name: settings.full_name,
+                system_prompt: settings.system_prompt,
+                ...(settings.gemini_api_key.trim() ? { gemini_api_key: settings.gemini_api_key.trim() } : {}),
+                clear_gemini_api_key: settings.clear_gemini_api_key,
+            }, { headers: authHeaders() });
+            setSettings((current) => ({
+                ...current,
+                gemini_api_key: "",
+                gemini_api_key_set: current.clear_gemini_api_key ? false : (current.gemini_api_key.trim() ? true : current.gemini_api_key_set),
+                clear_gemini_api_key: false,
+            }));
+            setSettingsNotice("Settings saved.");
+            loadModels();
+        } catch (err) {
+            if (handleAuthError(err)) return;
+            setSettingsError(err.message || "Couldn't save your settings.");
+        } finally {
+            setSettingsSaving(false);
+        }
+    };
+
+    const deleteAccount = async () => {
+        if (!window.confirm("Delete your account and all saved chats? This cannot be undone.")) return;
+        try {
+            await api.delete("/me", { headers: authHeaders() });
+            clearToken();
+            aiPanel.close();
+            onNavigate("/login");
+        } catch (err) {
+            if (handleAuthError(err)) return;
+            setSettingsError(err.message || "Couldn't delete your account.");
+        }
+    };
 
     const copyMessage = async (text, key) => {
         try {
@@ -321,20 +380,17 @@ export default function AIChat({ onNavigate }) {
             const decoder = new TextDecoder();
             let buffer = "";
             let reply = "";
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const events = buffer.split("\n\n");
-                buffer = events.pop();
-
-                for (const evt of events) {
-                    if (!evt.startsWith("data: ")) continue;
-                    const raw = evt.slice(6);
-                    if (raw === "[DONE]") continue;
+            const handleEvent = (evt) => {
+                const dataLines = evt.split(/\r?\n/)
+                    .filter((item) => item.startsWith("data:"))
+                    .map((item) => item.slice(5).trim())
+                    .filter(Boolean);
+                const rawEvents = dataLines.length ? dataLines : [evt.trim()];
+                rawEvents.forEach((raw) => {
+                    if (!raw || raw === "[DONE]") return;
                     const parsed = JSON.parse(raw);
                     if (parsed.error) throw new Error(parsed.error);
+                    if (!parsed.t) return;
                     reply += parsed.t;
                     const snapshot = reply;
                     updateChat(chatId, (c) => ({
@@ -342,8 +398,19 @@ export default function AIChat({ onNavigate }) {
                         messages: c.messages.map((m, i) => (i === c.messages.length - 1 ? { ...m, content: snapshot } : m)),
                         updatedAt: Date.now(),
                     }));
-                }
+                });
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const events = buffer.split(/\r?\n\r?\n/);
+                buffer = events.pop();
+                events.forEach(handleEvent);
             }
+            buffer += decoder.decode();
+            if (buffer.trim()) handleEvent(buffer);
         } catch (err) {
             updateChat(chatId, (c) => ({
                 ...c,
@@ -417,6 +484,9 @@ export default function AIChat({ onNavigate }) {
                         <button type="button" onClick={aiPanel.close} className={iconBtn} title="Close (Esc)" aria-label="Close AI assistant">
                             <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" /></svg>
                         </button>
+                        <button type="button" onClick={openSettings} className={iconBtn} title="Settings" aria-label="Settings">
+                            ⚙
+                        </button>
                     </div>
                 </header>
 
@@ -451,6 +521,65 @@ export default function AIChat({ onNavigate }) {
                             </nav>
                             <div className="border-t border-[#30363d] p-3">
                                 <button type="button" onClick={clearAll} className="w-full rounded-md border border-[#f85149]/40 px-3 py-1.5 text-xs text-[#f85149] transition hover:bg-[#f85149]/10">Clear all history</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {settingsOpen && (
+                        <div className="absolute inset-0 z-20 overflow-y-auto bg-[#0d1117] p-4">
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-[#e6edf3]">Settings</h3>
+                                    <p className="mt-1 text-xs text-[#8b949e]">Personalize the assistant and account.</p>
+                                </div>
+                                <button type="button" onClick={() => setSettingsOpen(false)} className={iconBtn} aria-label="Close settings">✕</button>
+                            </div>
+                            <form onSubmit={saveSettings} className="space-y-4">
+                                <label className="block">
+                                    <span className="mb-1 block text-xs font-semibold text-[#c9d1d9]">Assistant instruction</span>
+                                    <textarea
+                                        value={settings.system_prompt}
+                                        onChange={(e) => setSettings((current) => ({ ...current, system_prompt: e.target.value }))}
+                                        rows={5}
+                                        maxLength={4000}
+                                        placeholder="Example: Explain concepts like a patient tutor."
+                                        className="w-full resize-y rounded-md border border-[#30363d] bg-[#010409] px-3 py-2 text-sm text-[#c9d1d9] outline-none focus:border-[#388bfd]"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-xs font-semibold text-[#c9d1d9]">Your Gemini API key</span>
+                                    <input
+                                        type="password"
+                                        value={settings.gemini_api_key}
+                                        onChange={(e) => setSettings((current) => ({ ...current, gemini_api_key: e.target.value, clear_gemini_api_key: false }))}
+                                        placeholder={settings.gemini_api_key_set ? "Key saved (enter a new key to replace it)" : "Paste your Gemini API key"}
+                                        autoComplete="new-password"
+                                        className="w-full rounded-md border border-[#30363d] bg-[#010409] px-3 py-2 text-sm text-[#c9d1d9] outline-none focus:border-[#388bfd]"
+                                    />
+                                    <span className="mt-1 block text-[11px] text-[#8b949e]">The key is stored on the backend and is never displayed.</span>
+                                </label>
+                                {settings.gemini_api_key_set && (
+                                    <label className="flex items-center gap-2 text-xs text-[#c9d1d9]">
+                                        <input
+                                            type="checkbox"
+                                            checked={settings.clear_gemini_api_key}
+                                            onChange={(e) => setSettings((current) => ({ ...current, clear_gemini_api_key: e.target.checked }))}
+                                        />
+                                        Remove my saved Gemini key
+                                    </label>
+                                )}
+                                {settingsError && <p className="text-xs text-[#f85149]">{settingsError}</p>}
+                                {settingsNotice && <p className="text-xs text-[#3fb950]">{settingsNotice}</p>}
+                                <button type="submit" disabled={settingsSaving} className="w-full rounded-md bg-[#238636] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                                    {settingsSaving ? "Saving..." : "Save settings"}
+                                </button>
+                            </form>
+                            <div className="mt-8 border-t border-[#30363d] pt-4">
+                                <h4 className="text-xs font-semibold text-[#f85149]">Danger zone</h4>
+                                <p className="mt-1 text-xs text-[#8b949e]">Deletes your account, API key, and saved chats permanently.</p>
+                                <button type="button" onClick={deleteAccount} className="mt-3 rounded-md border border-[#f85149]/60 px-3 py-2 text-xs text-[#f85149] hover:bg-[#f85149]/10">
+                                    Delete account
+                                </button>
                             </div>
                         </div>
                     )}
@@ -564,20 +693,8 @@ export default function AIChat({ onNavigate }) {
                                 rows={1}
                                 placeholder="Ask the assistant..."
                                 aria-label="Chat message"
-                                className="max-h-36 flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-[#c9d1d9] outline-none placeholder:text-[#6e7681]"
+                                className="max-h-20 flex-1 resize-none bg-transparent py-1 text-sm leading-6 text-[#c9d1d9] outline-none placeholder:text-[#6e7681]"
                             />
-                            <select
-                                value={selectedModel}
-                                onChange={(e) => setSelectedModel(e.target.value)}
-                                onFocus={loadModels}
-                                disabled={isSending || isLoading || !localModels.length}
-                                title={modelsError || "Local model"}
-                                aria-label="Local model"
-                                className="max-w-[9rem] shrink-0 truncate rounded-md border border-[#30363d] bg-[#21262d] px-2 py-1.5 text-xs text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {!localModels.length && <option value="">No models</option>}
-                                {localModels.map((m) => <option key={m} value={m}>{m}</option>)}
-                            </select>
                             <button
                                 type="button"
                                 onClick={sendMessage}
@@ -586,6 +703,26 @@ export default function AIChat({ onNavigate }) {
                             >
                                 {isSending ? "..." : "Send"}
                             </button>
+                        </div>
+                        <div className="mt-2 flex items-center justify-end gap-2">
+                            <label htmlFor="ai-model-select" className="text-[11px] text-[#8b949e]">Model</label>
+                            <select
+                                id="ai-model-select"
+                                value={selectedModel}
+                                onChange={(e) => setSelectedModel(e.target.value)}
+                                onFocus={loadModels}
+                                disabled={isSending || isLoading || !localModels.length}
+                                title={modelsError || selectedModel || "AI model"}
+                                aria-label="AI model"
+                                className="min-w-[11rem] max-w-[16rem] rounded-md border border-[#30363d] bg-[#21262d] px-2 py-1.5 text-xs text-[#c9d1d9] transition hover:bg-[#30363d] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {!localModels.length && <option value="">No models</option>}
+                                {localModels.map((m) => (
+                                    <option key={m} value={m} className="bg-[#21262d] text-[#c9d1d9]">
+                                        {m.startsWith("gemini:") ? `Gemini (${m.slice(7)})` : m}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </div>

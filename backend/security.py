@@ -1,8 +1,11 @@
+import base64
+import hashlib
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
+from cryptography.fernet import Fernet, InvalidToken
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -40,6 +43,9 @@ class User(BaseModel):
     full_name: str | None = None
     disabled: bool | None = None
     system_prompt: str | None = None
+    gemini_api_key_encrypted: str | None = None
+    # Legacy field for keys saved before encrypted storage was added.
+    gemini_api_key: str | None = None
 
 
 class UserInDB(User):
@@ -56,6 +62,22 @@ class UserSignup(BaseModel):
 password_hash = PasswordHash.recommended()
 DUMMY_HASH = password_hash.hash("dummypassword")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def _api_key_cipher() -> Fernet:
+    key = base64.urlsafe_b64encode(hashlib.sha256(SECRET_KEY.encode()).digest())
+    return Fernet(key)
+
+
+def encrypt_api_key(api_key: str) -> str:
+    return _api_key_cipher().encrypt(api_key.encode()).decode()
+
+
+def decrypt_api_key(encrypted_api_key: str) -> str | None:
+    try:
+        return _api_key_cipher().decrypt(encrypted_api_key.encode()).decode()
+    except (InvalidToken, UnicodeDecodeError):
+        return None
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

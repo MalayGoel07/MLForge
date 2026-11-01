@@ -22,10 +22,11 @@ Other details:
 
 ### AI assistant
 - Open it with the **Ask AI** button next to the theme button. It slides in from the right and takes at most 45% of the screen on desktop (full width on mobile). Esc closes it.
-- Runs on **local Ollama models**: a vision model when you attach images, a coding model otherwise. Replies stream over SSE.
+- Runs on local Ollama models and optionally Google Gemini. A vision-capable selected model is used when you attach images; otherwise the configured coding model is used. Replies stream over SSE (Gemini replies are delivered as one streamed event).
 - Chat history is saved per user in MongoDB, with search, delete and clear-all.
 - Each reply has **Copy** and **Regenerate** buttons.
 - You can attach images and `.csv`, `.json`, `.txt` and `.md` files (up to 5 files, 10 MB each).
+- Open **Settings** in the AI panel to save a personal Gemini API key, set a persistent assistant instruction, or delete your account and saved chats. Personal keys are encrypted at rest with the server `SECRET_KEY`, used before the server-level `GEMINI_API_KEY`, and never returned by the API.
 
 ### Context AI
 Some pages can share what you are looking at with the assistant:
@@ -78,9 +79,11 @@ frontend/
    ```env
    model=<your-coder-model>          # used for text chats
    vision_model=<your-vision-model>  # used when images are attached
+   GEMINI_API_KEY=<your-Gemini-api-key> # optional; enables Gemini in the model picker
+   GEMINI_MODEL=gemini-2.5-flash       # optional Gemini model name
    NUM_PREDICT=512                   # optional, max tokens per reply
    ```
-3. Start Ollama (`ollama serve`, or open the Ollama app) and make sure MongoDB is running.
+3. Start Ollama (`ollama serve`, or open the Ollama app) and make sure MongoDB is running. Ollama is only required when using a local model; Gemini requests use the backend's `GEMINI_API_KEY`.
 4. Run the API from the repo root:
    ```bash
    uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000

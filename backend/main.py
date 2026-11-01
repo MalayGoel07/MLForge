@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import sys
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import Annotated, List, Literal
 
 import uvicorn
+import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +26,7 @@ if __package__ in (None, ""):
 from backend.db import chats_collection, users_collection
 from backend.ml.MlLogic import ml_router
 from backend.ml.clean_router import router as clean_router 
-from backend.security import ( ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserSignup, authenticate_user, create_access_token, get_current_active_user, get_password_hash,)
+from backend.security import ( ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserSignup, authenticate_user, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
 
 frontend_url = os.getenv("frontend_url")
 
@@ -36,6 +38,9 @@ client = Client(host="http://localhost:11434")
 
 M_CODER = os.getenv("model")
 M_VISION = os.getenv("vision_model")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+GEMINI_MODEL_OPTION = f"gemini:{GEMINI_MODEL}"
 
 SYSTEM_PROMPT = (
     "Write concise answers only. Do not add extra wording. "
@@ -91,6 +96,8 @@ class ChatSession(BaseModel):
 class ProfileUpdate(BaseModel):
     full_name: str | None = None
     system_prompt: str | None = None
+    gemini_api_key: str | None = Field(default=None, max_length=500)
+    clear_gemini_api_key: bool = False
 
 
 def installed_models() -> list[str]:
@@ -101,6 +108,31 @@ def installed_models() -> list[str]:
         if name and "embed" not in name.lower():
             names.append(name)
     return sorted(names)
+
+
+def available_ai_models() -> list[str]:
+    names = []
+    try:
+        names.extend(installed_models())
+    except Exception:
+        pass
+    if GEMINI_API_KEY:
+        names.append(GEMINI_MODEL_OPTION)
+    return names
+
+
+def user_gemini_api_key(user: User) -> str | None:
+    if user.gemini_api_key_encrypted:
+        return decrypt_api_key(user.gemini_api_key_encrypted)
+    if user.gemini_api_key:
+        encrypted = encrypt_api_key(user.gemini_api_key)
+        users_collection.update_one(
+            {"username": user.username},
+            {"$set": {"gemini_api_key_encrypted": encrypted}, "$unset": {"gemini_api_key": ""}},
+        )
+        return user.gemini_api_key
+    return None
+
 
 def has_vision(name: str) -> bool:
     try:
@@ -119,11 +151,10 @@ async def root():
 
 
 @app.get("/ai/models")
-def get_models():
-    try:
-        names = installed_models()
-    except Exception:
-        raise HTTPException(503, "Can't reach Ollama. Is it running?")
+def get_models(current_user: ActiveUser):
+    names = available_ai_models()
+    if user_gemini_api_key(current_user) and GEMINI_MODEL_OPTION not in names:
+        names.append(GEMINI_MODEL_OPTION)
     default = M_CODER if M_CODER in names else (names[0] if names else None)
     return {"models": names, "default": default, "vision": M_VISION}
 
@@ -168,15 +199,34 @@ def get_me(current_user: ActiveUser):
         "full_name": current_user.full_name or "",
         "email": current_user.email or "",
         "system_prompt": current_user.system_prompt or "",
+        "gemini_api_key_set": bool(user_gemini_api_key(current_user)),
     }
 
 
 @app.put("/me")
 def update_me(data: ProfileUpdate, current_user: ActiveUser):
-    changes = data.model_dump(exclude_unset=True)  # only touch fields the client sent
-    if changes:
-        users_collection.update_one({"username": current_user.username}, {"$set": changes})
+    changes = data.model_dump(include={"full_name", "system_prompt"}, exclude_unset=True)
+    update = {"$set": changes} if changes else {}
+    if data.clear_gemini_api_key:
+        update.setdefault("$set", {})["gemini_api_key_encrypted"] = None
+        update.setdefault("$unset", {})["gemini_api_key"] = ""
+    elif data.gemini_api_key is not None:
+        key = data.gemini_api_key.strip()
+        if key:
+            update.setdefault("$set", {})["gemini_api_key_encrypted"] = encrypt_api_key(key)
+            update.setdefault("$unset", {})["gemini_api_key"] = ""
+    if update:
+        users_collection.update_one({"username": current_user.username}, update)
     return {"message": "Profile updated"}
+
+
+@app.delete("/me")
+def delete_me(current_user: ActiveUser):
+    chats_collection.delete_many({"owner": current_user.username})
+    result = users_collection.delete_one({"username": current_user.username})
+    if result.deleted_count != 1:
+        raise HTTPException(404, "Account not found")
+    return {"message": "Account deleted"}
 
 
 # ---------- chat history (one document per chat, always filtered by owner) ----------
@@ -222,6 +272,7 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         raise HTTPException(400, "Invalid chat history.")
 
     images: List[bytes] = []
+    image_parts = []
     file_blocks: List[str] = []
     for f in files:
         name = f.filename or "attachment"
@@ -231,6 +282,10 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         ext = Path(name).suffix.lower()
         if (f.content_type or "").startswith("image/"):
             images.append(data)
+            image_parts.append({
+                "mime_type": f.content_type,
+                "data": base64.b64encode(data).decode("ascii"),
+            })
         elif ext in TEXT_EXTS:
             body = data.decode("utf-8", errors="replace")
             note = "\n[truncated]" if len(body) > MAX_TEXT_CHARS else ""
@@ -260,7 +315,8 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
         + [user_msg]
     )
     requested = model.strip()
-    if requested:
+    is_gemini = requested == GEMINI_MODEL_OPTION
+    if requested and not is_gemini:
         try:
             if requested not in installed_models():
                 raise HTTPException(400, f"Model '{requested}' is not installed. Run: ollama pull {requested}")
@@ -268,10 +324,13 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
             raise
         except Exception:
             raise HTTPException(503, "Can't reach Ollama. Is it running?")
+    gemini_api_key = (user_gemini_api_key(current_user) or GEMINI_API_KEY).strip()
+    if is_gemini and not gemini_api_key:
+        raise HTTPException(503, "Gemini is not configured. Set GEMINI_API_KEY in .env.")
 
     if images:
         # use the picked model if it can see images, else fall back to the env vision model
-        use_model = requested if requested and has_vision(requested) else M_VISION
+        use_model = requested if is_gemini or (requested and has_vision(requested)) else M_VISION
     else:
         use_model = requested or M_CODER
 
@@ -281,12 +340,51 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
             yield sse({"error": f"No model configured. Set `{which}` in .env."})
             return
         try:
+            if use_model == GEMINI_MODEL_OPTION:
+                gemini_contents = []
+                for message in messages:
+                    if message["role"] == "system":
+                        continue
+                    parts = [{"text": message["content"]}]
+                    if message["role"] == "user" and message is messages[-1]:
+                        parts.extend({"inline_data": image} for image in image_parts)
+                    gemini_contents.append({
+                        "role": "model" if message["role"] == "assistant" else "user",
+                        "parts": parts,
+                    })
+                with httpx.stream(
+                    "POST",
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:streamGenerateContent",
+                    params={"key": gemini_api_key, "alt": "sse"},
+                    json={
+                        "system_instruction": {"parts": [{"text": system}]},
+                        "contents": gemini_contents,
+                    },
+                    timeout=120,
+                ) as response:
+                    response.raise_for_status()
+                    for line in response.iter_lines():
+                        if not line.startswith("data:"):
+                            continue
+                        payload = json.loads(line[5:].strip())
+                        candidates = payload.get("candidates", [])
+                        parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+                        for part in parts:
+                            if part.get("text"):
+                                yield sse({"t": part["text"]})
+                yield "data: [DONE]\n\n"
+                return
             stream = client.chat(
                 model=use_model, messages=messages, stream=True, keep_alive="1m",
                 options={"temperature": 0.5, "num_predict": NUM_PREDICT},
             )
             for chunk in stream:
-                content = chunk["message"]["content"]
+                message = chunk.get("message") if isinstance(chunk, dict) else getattr(chunk, "message", None)
+                content = (
+                    message.get("content", "")
+                    if isinstance(message, dict)
+                    else getattr(message, "content", "")
+                )
                 if content:
                     yield sse({"t": content})
             yield "data: [DONE]\n\n"
@@ -295,7 +393,15 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
             logging.exception("Chat generation failed")
             yield sse({"error": "AI generation failed. Check backend logs."})
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
