@@ -280,41 +280,85 @@ export default function AIChat({ onNavigate }) {
     const [copiedKey, setCopiedKey] = useState("");
     const handledCtx = useRef(0);
 
-    // ---------- AI model picker ----------
+    // ---------- model selection ----------
+    const [provider, setProvider] = useState(() => localStorage.getItem("ai_provider") || "api");
+    const [apiModels, setApiModels] = useState([]);
     const [localModels, setLocalModels] = useState([]);
-    const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem("ai_model") || "");
+    const [selectedApiModel, setSelectedApiModel] = useState(() => localStorage.getItem("ai_api_model") || localStorage.getItem("ai_model") || "");
+    const [selectedLocalModel, setSelectedLocalModel] = useState(() => localStorage.getItem("ai_local_model") || "");
+    const selectedModel = provider === "api"? selectedApiModel: selectedLocalModel;
+
+    const setSelectedModel = (model) => {
+        if (provider === "api") {setSelectedApiModel(model);
+        } else {setSelectedLocalModel(model);}
+    };
+
+    const availableModels = provider === "api" ? apiModels : localModels;
     const [modelsError, setModelsError] = useState("");
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [settings, setSettings] = useState({ full_name: "", system_prompt: "", gemini_api_key: "", gemini_api_key_set: false, clear_gemini_api_key: false });
+    const [settings, setSettings] = useState({
+        full_name: "",
+        system_prompt: "",
+        gemini_api_key: "",
+        gemini_api_key_set: false,
+        clear_gemini_api_key: false
+    });
     const [settingsSaving, setSettingsSaving] = useState(false);
     const [settingsError, setSettingsError] = useState("");
     const [settingsNotice, setSettingsNotice] = useState("");
 
+    // ---------- Local Ollama connection ----------
+    const [ollamaUrl, setOllamaUrl] = useState(() => localStorage.getItem("ollama_url") || "http://localhost:11434");
+    const [ollamaStatus, setOllamaStatus] = useState("idle");
+    const [ollamaModel, setOllamaModel] = useState("");
+    const [ollamaError, setOllamaError] = useState("");
+    const testOllamaConnection = async () => {
+        const url = ollamaUrl.trim().replace(/\/+$/, "");
+        if (!url) {
+            setOllamaError("Please enter your Ollama URL.");
+            return;
+        }
+        setOllamaStatus("testing");
+        setOllamaError("");
+        localStorage.setItem("ollama_url", url);
+        try {
+            const response = await fetch(`${url}/api/tags`);
+            if (!response.ok) {throw new Error(`Ollama returned ${response.status}`);}
+            const data = await response.json();
+            const models = (data.models || []).map((model) => model.name).filter(Boolean);
+            if (!models.length) {throw new Error("Ollama is running, but no model is installed.");}
+            setLocalModels(models);
+            setSelectedLocalModel((current) =>models.includes(current) ? current : models[0]);
+            setOllamaModel(models[0]);
+            setOllamaStatus("connected");
+        } catch (err) {
+            setLocalModels([]);
+            setOllamaStatus("failed");
+            setOllamaError(err.message || "Couldn't connect to Ollama.");
+        }
+    };
     const loadModels = async () => {
         try {
             const { data } = await api.get("/ai/models");
-            const names = (data.models || []).filter((m) => typeof m === "string");
-            setLocalModels(names);
-            setModelsError(names.length ? "" : "No models found. Configure Ollama or GEMINI_API_KEY.");
-            // keep the saved choice if it's still installed, otherwise fall back to the default
-            setSelectedModel((cur) => (names.includes(cur) ? cur : data.default || ""));
+            const names = (data.models || []).filter((m) => typeof m === "string").filter((m) => m.toLowerCase().includes("gemini"));
+            setApiModels(names);
+            setModelsError(names.length ? "" : "No API models found. Configure your Gemini API key.");
+            setSelectedApiModel((current) => {
+                if (names.includes(current)) return current;
+                const defaultModel = names.includes(data.default)? data.default: names[0] || "";
+                return defaultModel;
+            });
         } catch {
-            setLocalModels([]);
-            setModelsError("Can't load models. Check Ollama or the backend configuration.");
+            setApiModels([]);
+            setModelsError("Can't load API models. Check your backend configuration.");
         }
     };
 
-    // Rescan installed models whenever the panel opens
-    useEffect(() => {
-        if (open) loadModels();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open]);
-
-    // Remember the choice across reloads
-    useEffect(() => {
-        if (selectedModel) localStorage.setItem("ai_model", selectedModel);
-    }, [selectedModel]);
-
+    useEffect(() => {if (open) loadModels();}, [open]);
+    useEffect(() => {localStorage.setItem("ai_provider", provider);}, [provider]);
+    useEffect(() => {if (selectedApiModel) {localStorage.setItem("ai_api_model", selectedApiModel);}}, [selectedApiModel]);
+    useEffect(() => {if (selectedLocalModel) {localStorage.setItem("ai_local_model", selectedLocalModel);}}, [selectedLocalModel]);
+    
     const openSettings = async () => {
         setSettingsOpen(true);
         setHistoryOpen(false);
@@ -329,10 +373,7 @@ export default function AIChat({ onNavigate }) {
         }
     };
 
-    useEffect(() => {
-        if (settingsRequest) openSettings();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [settingsRequest]);
+    useEffect(() => {if (settingsRequest) openSettings();}, [settingsRequest]);
 
     const saveSettings = async (event) => {
         event.preventDefault();
@@ -360,31 +401,6 @@ export default function AIChat({ onNavigate }) {
         } finally {
             setSettingsSaving(false);
         }
-    };
-
-    const deleteAccount = () => setConfirmState({
-        title: "Delete your account?",
-        body: "This permanently deletes your account, saved API key and all chats. This can't be undone.",
-        confirmLabel: "Delete account",
-        onConfirm: async () => {
-            try {
-                await api.delete("/me", { headers: authHeaders() });
-                clearToken();
-                setSettingsOpen(false);
-                aiPanel.close();
-                onNavigate("/login");
-            } catch (err) {
-                if (handleAuthError(err)) return;
-                setSettingsError(err.message || "Couldn't delete your account.");
-            }
-        },
-    });
-
-    const logout = () => {
-        clearToken();
-        setSettingsOpen(false);
-        aiPanel.close();
-        onNavigate("/login");
     };
 
     const copyMessage = async (text, key) => {
@@ -415,7 +431,11 @@ export default function AIChat({ onNavigate }) {
         if (!getToken()) { aiPanel.close(); onNavigate("/login"); return; }
         loaded.current = true;
         api.get("/chats", { headers: authHeaders() }).then(({ data }) => {
-            const saved = data.chats || [];
+            const saved = (data.chats || []).map((chat) => ({
+                ...chat,
+                messages: Array.isArray(chat.messages) ? chat.messages : [],
+                updatedAt: chat.updatedAt || Date.now(),
+            }));
             if (saved.length) { setChats(saved); setActiveId(saved[0].id); }
         }).catch((err) => {
             if (handleAuthError(err)) return;
@@ -920,6 +940,74 @@ export default function AIChat({ onNavigate }) {
                                             </label>
                                         )}
                                     </div>
+                                    {/* Local Ollama connection */}
+                                    <div className="border-t border-[#30363d] pt-4">
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-xs font-semibold text-[#e6edf3]">
+                                                    Local Ollama
+                                                </h4>
+                                                <p className="mt-1 text-[11px] text-[#8b949e]">
+                                                    Connect directly to Ollama running on your computer.
+                                                </p>
+                                            </div>
+
+                                            {ollamaStatus === "connected" && (
+                                                <span className="rounded-full bg-[#238636]/15 px-2 py-1 text-[11px] text-[#3fb950]">
+                                                    Connected
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        <label className="block">
+                                            <span className="mb-1.5 block text-xs font-medium text-[#c9d1d9]">
+                                                Ollama URL
+                                            </span>
+                                        
+                                            <input
+                                                type="url"
+                                                value={ollamaUrl}
+                                                onChange={(e) => {
+                                                    setOllamaUrl(e.target.value);
+                                                    setOllamaStatus("idle");
+                                                    setOllamaModel("");
+                                                    setOllamaError("");
+                                                }}
+                                                placeholder="http://localhost:11434"
+                                                className={field}
+                                            />
+                                        </label>
+                                            
+                                        <button
+                                            type="button"
+                                            onClick={testOllamaConnection}
+                                            disabled={ollamaStatus === "testing"}
+                                            className={`mt-3 w-full rounded-lg border border-[#30363d] bg-[#161b22] px-3 py-2 text-xs font-medium text-[#c9d1d9] transition hover:border-[#388bfd] hover:bg-[#21262d] disabled:opacity-50 ${focusRing}`}
+                                        >
+                                            {ollamaStatus === "testing"
+                                                ? "Connecting..."
+                                                : ollamaStatus === "connected"
+                                                    ? "Test connection again"
+                                                    : "Test Ollama connection"}
+                                        </button>
+                                            
+                                        {ollamaStatus === "connected" && (
+                                            <p className="mt-2 text-[11px] text-[#3fb950]">
+                                                Detected model: {ollamaModel}
+                                            </p>
+                                        )}
+
+                                        {ollamaError && (
+                                            <p role="alert" className="mt-2 text-[11px] leading-5 text-[#ff7b72]">
+                                                {ollamaError}
+                                            </p>
+                                        )}
+
+                                        <p className="mt-2 text-[11px] leading-5 text-[#8b949e]">
+                                            Make sure Ollama is running. You may need to allow your frontend
+                                            origin in Ollama's OLLAMA_ORIGINS setting.
+                                        </p>
+                                    </div>
                                     {settingsError && <p role="alert" className="text-xs text-[#ff7b72]">{settingsError}</p>}
                                     {settingsNotice && <p role="status" className="text-xs text-[#3fb950]">{settingsNotice}</p>}
                                     <button type="submit" disabled={settingsSaving} className={`w-full rounded-lg bg-[#238636] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#2ea043] disabled:opacity-50 ${focusRing}`}>
@@ -1094,7 +1182,7 @@ export default function AIChat({ onNavigate }) {
                         </div>
                     )}
 
-                    <div className="rounded-xl border border-[#30363d] bg-[#010409] transition focus-within:border-[#388bfd] focus-within:ring-2 focus-within:ring-[#388bfd]/20">
+                    <div className="rounded-xl border border-[#30363d] bg-[#010409] transition">
                         <textarea
                             ref={textareaRef}
                             value={input}
@@ -1118,25 +1206,55 @@ export default function AIChat({ onNavigate }) {
                                 <Icon name="paperclip" size={16} />
                             </button>
 
-                            <div className="relative min-w-0">
-                                <label htmlFor="ai-model-select" className="sr-only">AI model</label>
-                                <select
-                                    id="ai-model-select"
-                                    value={selectedModel}
-                                    onChange={(e) => setSelectedModel(e.target.value)}
-                                    onFocus={loadModels}
-                                    disabled={isSending || isLoading || !localModels.length}
-                                    title={modelsError || selectedModel || "AI model"}
-                                    className={`h-8 w-full max-w-[13rem] cursor-pointer appearance-none truncate rounded-md bg-transparent py-1 pl-2 pr-6 text-xs text-[#8b949e] transition hover:bg-[#21262d] hover:text-[#c9d1d9] disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
-                                >
-                                    {!localModels.length && <option value="">No models</option>}
-                                    {localModels.map((m) => (
-                                        <option key={m} value={m} className="bg-[#21262d] text-[#c9d1d9]">
-                                            {m.startsWith("gemini:") ? `Gemini (${m.slice(7)})` : m}
-                                        </option>
-                                    ))}
-                                </select>
-                                <Icon name="chevron" size={12} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#6e7681]" />
+                            {/* Provider + Model selectors */}
+                            <div className="flex min-w-0 items-center gap-1.5">                                      
+                                <div className="relative shrink-0">
+                                    <label htmlFor="ai-provider-select" className="sr-only">AI provider</label>
+                                    <select
+                                        id="ai-provider-select"
+                                        value={provider}
+                                        onChange={(e) => {
+                                            const nextProvider = e.target.value;
+                                            setProvider(nextProvider);
+                                            if (nextProvider === "local" && !localModels.length) {testOllamaConnection();}
+                                            if (nextProvider === "api" && !apiModels.length) {loadModels();}
+                                        }}
+                                        disabled={isSending || isLoading}
+                                        className={`h-8 max-w-[5.5rem] cursor-pointer appearance-none rounded-md border border-[#30363d] bg-[#161b22] py-1 pl-2 pr-6 text-xs text-[#c9d1d9] transition hover:border-[#388bfd] disabled:opacity-50 ${focusRing}`}
+                                    >
+                                        <option value="api" className="bg-[#21262d]">API</option>
+                                        <option value="local" className="bg-[#21262d]">Local</option>
+                                    </select>
+                                    <Icon name="chevron" size={11} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#6e7681]"/>
+                                </div>
+                                    
+                                {/* Model selector */}
+                                <div className="relative min-w-0 flex-1">
+                                    <label htmlFor="ai-model-select" className="sr-only">AI model</label>
+                                    <select
+                                        id="ai-model-select"
+                                        value={selectedModel}
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                        onFocus={() => {
+                                            if (provider === "api") loadModels();
+                                            else if (ollamaStatus !== "connected") testOllamaConnection();
+                                        }}
+                                        disabled={isSending || isLoading || !availableModels.length}
+                                        title={
+                                            provider === "api"
+                                                ? modelsError || selectedModel || "API model"
+                                                : ollamaError || selectedModel || "Local model"
+                                        }
+                                        className={`h-8 w-full cursor-pointer appearance-none truncate rounded-md bg-transparent py-1 pl-2 pr-6 text-xs text-[#8b949e] transition hover:bg-[#21262d] hover:text-[#c9d1d9] disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
+                                    >
+                                        {!availableModels.length && (<option value="">{provider === "api" ? "No API models" : "No local models"}</option>)}
+                                        {availableModels.map((model) => (
+                                            <option key={model} value={model} className="bg-[#21262d] text-[#c9d1d9]">{provider === "api" ? `Gemini (${model.slice(7)})` : model}</option>
+                                        ))}
+                                    </select>
+                                    
+                                    <Icon name="chevron" size={12} className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[#6e7681]"/>
+                                </div>
                             </div>
 
                             <span className="flex-1" />

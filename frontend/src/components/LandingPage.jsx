@@ -43,7 +43,7 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
           <a href="#demo" className="hover:text-white transition-colors">Demo</a>
         </div>
         <div className="flex items-center gap-3">
-          <ThemeButton onNavigate={onNavigate} showSettings={false} />
+          <ThemeButton onNavigate={onNavigate} showSettings={false} showAIButton={false} />
           <button onClick={()=> navigate("/home")} className="t-btn bg-[#58a6ff] hover:bg-[#388bfd] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
         </div>
       </nav>

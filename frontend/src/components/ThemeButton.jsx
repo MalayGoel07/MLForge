@@ -31,7 +31,7 @@ export function useGlobalTheme(theme) {
   }, [theme]);
 }
 
-export default function ThemeButton({ onNavigate, className = "", showSettings = true }) {
+export default function ThemeButton({ onNavigate, className = "", showSettings = true, showAIButton = true }) {
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
       {showSettings && (
@@ -45,7 +45,7 @@ export default function ThemeButton({ onNavigate, className = "", showSettings =
           ⚙ <span className="hidden sm:inline">Settings</span>
         </button>
       )}
-      <AIButton />
+      {showAIButton && <AIButton />}
     </div>
   );
 }
