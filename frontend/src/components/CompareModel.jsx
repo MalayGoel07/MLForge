@@ -58,6 +58,7 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
     const resultsRef = useRef(null);
     const [fileName, setFileName] = useState("");
     const [file, setFile] = useState(null);
+    const [fileContent, setFileContent] = useState("");
     const [dragging, setDragging] = useState(false);
 
     const [targetColumn, setTargetColumn] = useState("");
@@ -97,7 +98,7 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
         }));
     };
 
-    const handleFile = (selected) => {
+    const handleFile = async (selected) => {
         if (!selected) return;
         if (!/\.(csv|json|xlsx)$/i.test(selected.name)) { setError("Please choose a .csv, .json or .xlsx file."); return; }
         setFile(selected);
@@ -105,6 +106,15 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
         setResults({});
         setError("");
         setShowTable(false);
+        try {
+            if (/\.(csv|json)$/i.test(selected.name)) {
+                setFileContent(await selected.text());
+            } else {
+                setFileContent(`[binary file: ${selected.name}]`);
+            }
+        } catch {
+            setFileContent(`[could not read: ${selected.name}]`);
+        }
     };
 
     const activeTaskSets = new Set(selectedModels.map((name) => {
@@ -189,12 +199,11 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
     useEffect(() => { if (!isRunning && doneCount > 0) setRunStamp(Date.now()); }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const shareWithAI = async () => {
-        let preview = "", rows = "?", cols = "?";
-        if (/\.csv$/i.test(fileName) && file.size < 20 * 1024 * 1024) {
-            const lines = (await file.text()).split(/\r?\n/).filter(Boolean);
+        let rows = "?", cols = "?";
+        if (/\.csv$/i.test(fileName) && fileContent) {
+            const lines = fileContent.split(/\r?\n/).filter(Boolean);
             rows = Math.max(lines.length - 1, 0);
             cols = lines[0]?.split(",").length ?? "?";
-            preview = lines.slice(0, 11).join("\n");
         }
         const modelLines = selectedModels.map((name) => {
             const e = results[name];
@@ -209,7 +218,7 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
             `Ranked by: ${PRIMARY_METRIC[taskType].key} (higher is better)`,
             `Best model: ${bestModel} (${bestScore}); test samples: ${testSamples}`,
             "Model results:", ...modelLines,
-            preview && `CSV preview (header + first rows):\n${preview}`,
+            fileContent ? `\nDataset file content:\n${fileContent}` : "",
         ].filter(Boolean).join("\n").slice(0, 6000);
 
         aiPanel.openWithContext({
