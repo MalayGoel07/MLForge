@@ -810,7 +810,7 @@ export default function AIChat({ onNavigate }) {
                                     />
                                 </div>
                             </div>
-                            <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#8a8a8a]" aria-label="Chat history">
+                            <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#58a6ff]" aria-label="Chat history">
                                 {isLoading && (
                                     <div className="space-y-2 p-2" aria-hidden="true">
                                         {[0, 1, 2, 3].map((n) => <div key={n} className="h-12 animate-pulse rounded-lg bg-[#161b22] motion-reduce:animate-none" />)}
@@ -861,7 +861,7 @@ export default function AIChat({ onNavigate }) {
                                     <p className="text-[11px] leading-tight text-[#8b949e]">Personalize the assistant and manage your account.</p>
                                 </div>
                             </div>
-                            <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-[#8a8a8a]">
+                            <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-[#58a6ff]">
                                 <form onSubmit={saveSettings} className="space-y-5">
                                     <label className="block">
                                         <span className="mb-1.5 block text-xs font-semibold text-[#e6edf3]">Display name</span>
@@ -926,20 +926,6 @@ export default function AIChat({ onNavigate }) {
                                         {settingsSaving ? "Saving..." : "Save settings"}
                                     </button>
                                 </form>
-
-                                <div className="mt-8 space-y-3 border-t border-[#30363d] pt-5">
-                                    <h4 className="text-xs font-semibold text-[#e6edf3]">Account</h4>
-                                    <button type="button" onClick={logout} className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[#30363d] px-3 py-2 text-xs font-semibold text-[#c9d1d9] transition hover:bg-[#21262d] ${focusRing}`}>
-                                        <Icon name="logout" size={14} /> Log out
-                                    </button>
-                                </div>
-                                <div className="mt-5 rounded-lg border border-[#f85149]/30 p-3">
-                                    <h4 className="text-xs font-semibold text-[#ff7b72]">Delete account</h4>
-                                    <p className="mt-1 text-xs text-[#8b949e]">Permanently removes your account, API key and saved chats.</p>
-                                    <button type="button" onClick={deleteAccount} className={`mt-3 rounded-lg border border-[#f85149]/60 px-3 py-1.5 text-xs font-medium text-[#ff7b72] transition hover:bg-[#f85149]/10 ${focusRing}`}>
-                                        Delete account
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -963,7 +949,7 @@ export default function AIChat({ onNavigate }) {
                     )}
 
                     {/* Messages */}
-                    <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto scroll-smooth px-4 py-4 scrollbar-thin scrollbar-thumb-[#8a8a8a]">
+                    <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto scroll-smooth px-4 py-4 scrollbar-thin scrollbar-thumb-[#58a6ff]">
                         <div className="flex min-h-full flex-col gap-5">
                             {activeChat.messages.length === 0 && (
                                 <div className="my-auto py-6">

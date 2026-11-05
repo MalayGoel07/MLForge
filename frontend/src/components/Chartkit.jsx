@@ -1,7 +1,7 @@
 /* Shared SVG chart pieces for CleanData and DataAnalyzer (no dependencies). */
-export const CHART_COLOR = "#161616";
+export const CHART_COLOR = "#161b22";
 export const BEFORE_COLOR = "#d4a05a";
-export const AFTER_COLOR = "#8a8a8a";
+export const AFTER_COLOR = "#58a6ff";
 
 export const fmt = (n) => {
     if (n === null || n === undefined) return "--";
@@ -12,7 +12,7 @@ export const fmt = (n) => {
 
 export const skewColor = (s) => {
     const a = Math.abs(s ?? 0);
-    return a < 0.5 ? "#8a8a8a" : a < 1 ? "#d9b45a" : "#d46a6a";
+    return a < 0.5 ? "#58a6ff" : a < 1 ? "#d9b45a" : "#d46a6a";
 };
 
 /* Boxplot. `before` / `after` are stat objects:
@@ -39,7 +39,7 @@ export function BoxPlot({ before, after, shared = true, beforeLabel = "Before", 
                 const s = r.s;
                 return (
                     <g key={r.label}>
-                        <text x={0} y={cy + 4} fill="#d0d0d0" fontSize="12">{r.label}</text>
+                        <text x={0} y={cy + 4} fill="#c9d1d9" fontSize="12">{r.label}</text>
                         <line x1={x(s.whisker_low)} x2={x(s.whisker_high)} y1={cy} y2={cy} stroke={r.color} strokeWidth="1.5" />
                         <line x1={x(s.whisker_low)} x2={x(s.whisker_low)} y1={cy - 7} y2={cy + 7} stroke={r.color} strokeWidth="1.5" />
                         <line x1={x(s.whisker_high)} x2={x(s.whisker_high)} y1={cy - 7} y2={cy + 7} stroke={r.color} strokeWidth="1.5" />
@@ -81,7 +81,7 @@ export function SkewBar({ value }) {
     const v = value ?? 0;
     const w = Math.min(Math.abs(v) / 3, 1) * 50;
     return (
-        <div className="relative h-2 w-full rounded bg-[#161616]">
+        <div className="relative h-2 w-full rounded bg-[#161b22]">
             <div className="absolute left-1/2 top-0 h-full w-px bg-[#3a3a3a]" />
             <div className="absolute top-0 h-full rounded" style={{ width: `${w}%`, left: v >= 0 ? "50%" : `${50 - w}%`, background: skewColor(v) }} />
         </div>

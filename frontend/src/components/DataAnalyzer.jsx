@@ -56,19 +56,19 @@ function findings(analysis) {
 /* ------------------------------------------------------------------ */
 /*  Small UI pieces                                                    */
 /* ------------------------------------------------------------------ */
-const inputCls = "w-full rounded-lg border border-[#2a2a2a] bg-[#111111] px-2 py-1.5 text-xs text-[#e8e8e8] focus:border-[#5a5a5a] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#e6edf3] focus:border-[#388bfd] focus:outline-none";
 
 function Collapse({ title, badge, open, onToggle, children }) {
     return (
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#111111]">
-            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161616]">
+        <div className="rounded-lg border border-[#30363d] bg-[#161b22]">
+            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161b22]">
                 <span className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#e8e8e8]">{title}</span>
-                    {badge && <span className="rounded-md bg-[#000000] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
+                    <span className="text-sm font-semibold text-[#e6edf3]">{title}</span>
+                    {badge && <span className="rounded-md bg-[#0d1117] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
                 </span>
                 <span className={`text-sm text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
             </button>
-            {open && <div className="border-t border-[#2a2a2a] p-4">{children}</div>}
+            {open && <div className="border-t border-[#30363d] p-4">{children}</div>}
         </div>
     );
 }
@@ -76,7 +76,7 @@ function Collapse({ title, badge, open, onToggle, children }) {
 function StepHeader({ n, title, sub }) {
     return (
         <div className="mb-4 flex items-start gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#5a5a5a] bg-[#161616] text-xs font-bold text-[#e8e8e8]">{n}</span>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#388bfd] bg-[#161b22] text-xs font-bold text-[#e6edf3]">{n}</span>
             <div>
                 <h2 className="text-lg font-bold leading-7">{title}</h2>
                 {sub && <p className="text-xs leading-5 text-gray-500">{sub}</p>}
@@ -179,7 +179,7 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
     const hasSource = !!file || !!input.trim();
 
     return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
                     <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
@@ -197,7 +197,7 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
 
                 <div className="flex flex-col gap-5">
                     {/* ---------------- Step 1: upload ---------------- */}
-                    <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5 shadow-2xl shadow-[#161616]/20">
+                    <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5 shadow-2xl shadow-[#161b22]/20">
                         <StepHeader n="1" title="Bring in your data" sub="CSV, JSON or XLSX. Nothing is changed, this only reads your data." />
                         <input ref={fileInputRef} type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
                         <button
@@ -206,9 +206,9 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                             onDragLeave={() => setDragging(false)}
                             onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#8a8a8a] bg-[#161616]" : "border-[#2a2a2a] bg-[#111111] hover:border-[#5a5a5a]"}`}
+                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#58a6ff] bg-[#161b22]" : "border-[#30363d] bg-[#161b22] hover:border-[#388bfd]"}`}
                         >
-                            <span className="block text-sm font-semibold text-[#e8e8e8]">{fileName || "Drop a file here, or click to browse"}</span>
+                            <span className="block text-sm font-semibold text-[#e6edf3]">{fileName || "Drop a file here, or click to browse"}</span>
                             <span className="mt-1 block text-xs text-gray-500">{fileName ? "Click to choose a different file" : ".csv, .json or .xlsx"}</span>
                         </button>
 
@@ -217,7 +217,7 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                 <textarea
                                     value={input}
                                     onChange={(event) => { setInput(event.target.value); setFile(null); setFileName(""); setAnalysis(null); setError(""); }}
-                                    className="h-48 w-full resize-none rounded-lg border border-[#2a2a2a] bg-[#050505] p-4 text-sm leading-6 text-[#e8e8e8] outline-none transition placeholder:text-gray-600 focus:border-[#8a8a8a]"
+                                    className="h-48 w-full resize-none rounded-lg border border-[#30363d] bg-[#010409] p-4 text-sm leading-6 text-[#e6edf3] outline-none transition placeholder:text-gray-600 focus:border-[#58a6ff]"
                                     placeholder="Paste rows or JSON here..."
                                     aria-label="Dataset input"
                                 />
@@ -231,22 +231,22 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
 
                     {/* ---------------- Step 2: overview ---------------- */}
                     {analysis && (
-                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#2a2a2a] bg-[#111111] p-5 shadow-2xl shadow-[#161616]/10">
+                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#30363d] bg-[#161b22] p-5 shadow-2xl shadow-[#161b22]/10">
                             <StepHeader n="2" title="Dataset overview" sub={`${fmt(analysis.rows)} rows, ${fmt(analysis.columns)} columns`} />
 
                             <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                                 {cards.map(([label, value]) => (
-                                    <div key={label} className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4 transition-colors hover:border-[#5a5a5a]">
+                                    <div key={label} className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4 transition-colors hover:border-[#388bfd]">
                                         <p className="text-xs text-gray-500">{label}</p>
-                                        <p className="mt-2 truncate text-2xl font-bold tabular-nums text-[#d0d0d0]">{value === undefined || value === null ? "--" : fmt(value)}</p>
+                                        <p className="mt-2 truncate text-2xl font-bold tabular-nums text-[#c9d1d9]">{value === undefined || value === null ? "--" : fmt(value)}</p>
                                     </div>
                                 ))}
                             </div>
 
-                            <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">What we found:</p>
+                            <div className="mt-4 rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">What we found:</p>
                                 {issues.length === 0 ? (
-                                    <p className="text-xs text-[#8a8a8a]">No obvious problems. This dataset looks healthy.</p>
+                                    <p className="text-xs text-[#58a6ff]">No obvious problems. This dataset looks healthy.</p>
                                 ) : (
                                     <ul className="space-y-1.5 text-xs leading-5 text-gray-400">
                                         {issues.map((t) => (
@@ -260,7 +260,7 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
 
                     {/* ---------------- Step 3: explore ---------------- */}
                     {analysis && (
-                        <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5">
+                        <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5">
                             <StepHeader n="3" title="Explore the details" sub="Open any section to look closer. Everything starts collapsed." />
 
                             <div className="space-y-2">
@@ -268,9 +268,9 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                     <Collapse title="Columns and data types" badge={`${analysis.types.length} fields`} open={showTypes} onToggle={() => setShowTypes((v) => !v)}>
                                         <div className="neutral-thin-scroll grid max-h-56 gap-2 overflow-y-auto pr-2 sm:grid-cols-2">
                                             {analysis.types.map(({ name, type }) => (
-                                                <div key={name} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-[#2a2a2a] bg-[#000000] px-3 py-2 text-sm">
-                                                    <span className="truncate text-[#e8e8e8]">{name}</span>
-                                                    <span className="shrink-0 rounded bg-[#161616] px-2 py-1 text-xs text-[#d0d0d0]">{type}</span>
+                                                <div key={name} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm">
+                                                    <span className="truncate text-[#e6edf3]">{name}</span>
+                                                    <span className="shrink-0 rounded bg-[#161b22] px-2 py-1 text-xs text-[#c9d1d9]">{type}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -287,12 +287,12 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                     </label>
 
                                     {!activeStat ? (
-                                        <p className="rounded-lg border border-dashed border-[#2a2a2a] p-6 text-center text-sm text-gray-500">This dataset has no numeric columns to plot.</p>
+                                        <p className="rounded-lg border border-dashed border-[#30363d] p-6 text-center text-sm text-gray-500">This dataset has no numeric columns to plot.</p>
                                     ) : (
                                         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-                                            <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
+                                            <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
                                                 <div className="mb-2 flex items-center justify-between gap-3">
-                                                    <p className="truncate text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">{activeCol}</p>
+                                                    <p className="truncate text-xs uppercase tracking-[0.2em] text-[#c9d1d9]">{activeCol}</p>
                                                     <span className="text-xs" style={{ color: skewColor(num(activeStat.skewness)) }}>{skewLabel(num(activeStat.skewness))}</span>
                                                 </div>
                                                 <BoxPlot before={toBox(activeStat, activeOut)} beforeLabel="Data" />
@@ -303,13 +303,13 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                                 )}
                                             </div>
 
-                                            <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">Statistics</p>
+                                            <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#c9d1d9]">Statistics</p>
                                                 <div className="grid grid-cols-2 gap-x-3 gap-y-3 sm:grid-cols-3">
                                                     {STAT_FIELDS.map(([label, key]) => (
                                                         <div key={key}>
                                                             <p className="text-xs text-gray-500">{label}</p>
-                                                            <p className="mt-1 truncate font-semibold text-[#e8e8e8]">{fmt(num(activeStat[key]))}</p>
+                                                            <p className="mt-1 truncate font-semibold text-[#e6edf3]">{fmt(num(activeStat[key]))}</p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -320,15 +320,15 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
 
                                 <Collapse title="Skewness and outliers per column" badge={outlierColCount ? `${outlierColCount} with outliers` : undefined} open={showColumnCharts} onToggle={() => setShowColumnCharts((v) => !v)}>
                                     {statCols.length === 0 ? (
-                                        <p className="rounded-lg border border-dashed border-[#2a2a2a] p-6 text-center text-sm text-gray-500">This dataset has no numeric columns.</p>
+                                        <p className="rounded-lg border border-dashed border-[#30363d] p-6 text-center text-sm text-gray-500">This dataset has no numeric columns.</p>
                                     ) : (
                                         <div className="grid gap-4 lg:grid-cols-2">
-                                            <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">Skewness per column</p>
+                                            <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#c9d1d9]">Skewness per column</p>
                                                 <div className="neutral-thin-scroll max-h-72 space-y-3 overflow-y-auto pr-2">
                                                     {skewRows.map(({ name, skew }) => (
-                                                        <button key={name} type="button" onClick={() => { setSelectedCol(name); setShowDistribution(true); }} className={`grid w-full grid-cols-[110px_1fr_50px] items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-[#161616] ${name === activeCol ? "bg-[#161616]" : ""}`}>
-                                                            <span className="truncate text-xs text-[#e8e8e8]" title={name}>{name}</span>
+                                                        <button key={name} type="button" onClick={() => { setSelectedCol(name); setShowDistribution(true); }} className={`grid w-full grid-cols-[110px_1fr_50px] items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-[#161b22] ${name === activeCol ? "bg-[#161b22]" : ""}`}>
+                                                            <span className="truncate text-xs text-[#e6edf3]" title={name}>{name}</span>
                                                             <SkewBar value={skew} />
                                                             <span className="text-right text-[11px]" style={{ color: skewColor(skew) }}>{fmt(skew)}</span>
                                                         </button>
@@ -337,14 +337,14 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                                 <p className="mt-3 text-[10px] text-gray-600">Sorted by strength. Low values under 0.5, amber under 1, red above 1. Click a row to inspect it.</p>
                                             </div>
 
-                                            <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">Outlier share per column</p>
+                                            <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                                <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#c9d1d9]">Outlier share per column</p>
                                                 <div className="neutral-thin-scroll max-h-72 space-y-3 overflow-y-auto pr-2">
                                                     {outlierRows.map(({ name, count, pct }) => (
-                                                        <button key={name} type="button" onClick={() => { setSelectedCol(name); setShowDistribution(true); }} className={`grid w-full grid-cols-[110px_1fr_80px] items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-[#161616] ${name === activeCol ? "bg-[#161616]" : ""}`}>
-                                                            <span className="truncate text-xs text-[#e8e8e8]" title={name}>{name}</span>
-                                                            <div className="h-2 w-full rounded bg-[#161616]">
-                                                                <div className="h-full rounded" style={{ width: `${Math.min(pct / maxPct, 1) * 100}%`, background: pct === 0 ? "#8a8a8a" : pct > 5 ? "#d46a6a" : "#d9b45a" }} />
+                                                        <button key={name} type="button" onClick={() => { setSelectedCol(name); setShowDistribution(true); }} className={`grid w-full grid-cols-[110px_1fr_80px] items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-[#161b22] ${name === activeCol ? "bg-[#161b22]" : ""}`}>
+                                                            <span className="truncate text-xs text-[#e6edf3]" title={name}>{name}</span>
+                                                            <div className="h-2 w-full rounded bg-[#161b22]">
+                                                                <div className="h-full rounded" style={{ width: `${Math.min(pct / maxPct, 1) * 100}%`, background: pct === 0 ? "#58a6ff" : pct > 5 ? "#d46a6a" : "#d9b45a" }} />
                                                             </div>
                                                             <span className="text-right text-[11px] text-gray-500">{count} ({fmt(pct)}%)</span>
                                                         </button>
@@ -360,14 +360,14 @@ export default function DataAnalyzer({ onNavigate, theme = "black", onSelectThem
                                     {chartCount ? (
                                         <div className="grid gap-4 md:grid-cols-2">
                                             {analysis.charts.map(({ title, image }) => (
-                                                <figure key={title} className="overflow-hidden rounded-lg border border-[#2a2a2a] bg-[#000000] p-3">
+                                                <figure key={title} className="overflow-hidden rounded-lg border border-[#30363d] bg-[#0d1117] p-3">
                                                     <img src={`data:image/png;base64,${image}`} alt={title} className="h-auto w-full rounded bg-white" />
-                                                    <figcaption className="px-1 pt-3 text-sm text-[#e8e8e8]">{title}</figcaption>
+                                                    <figcaption className="px-1 pt-3 text-sm text-[#e6edf3]">{title}</figcaption>
                                                 </figure>
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="rounded-lg border border-dashed border-[#2a2a2a] p-6 text-sm text-gray-500">This dataset needs at least two related columns to generate relationship charts.</p>
+                                        <p className="rounded-lg border border-dashed border-[#30363d] p-6 text-sm text-gray-500">This dataset needs at least two related columns to generate relationship charts.</p>
                                     )}
                                 </Collapse>
                             </div>

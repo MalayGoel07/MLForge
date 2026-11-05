@@ -92,9 +92,9 @@ let idCounter = 0;
 const newCell = (code = "") => ({ id: `cell-${++idCounter}`, code, output: null, status: "idle", count: null });
 
 const NOTEBOOK_STYLES = `
-.nb-html table{border-collapse:collapse;font-size:12px;color:#e8e8e8}
-.nb-html th,.nb-html td{border:1px solid #2a2a2a;padding:4px 10px;text-align:right}
-.nb-html thead{background:#161616;color:#d0d0d0}
+.nb-html table{border-collapse:collapse;font-size:12px;color:#e6edf3}
+.nb-html th,.nb-html td{border:1px solid #30363d;padding:4px 10px;text-align:right}
+.nb-html thead{background:#161b22;color:#c9d1d9}
 .nb-html style{display:none}
 `;
 
@@ -116,7 +116,7 @@ function CodeArea({ cellId, value, onChange, onKeyDown }) {
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Write Python here. Shift+Enter runs the cell."
-            className="block w-full resize-none overflow-hidden bg-transparent px-4 py-3 text-sm leading-6 text-[#e8e8e8] placeholder:text-gray-600 focus:outline-none"
+            className="block w-full resize-none overflow-hidden bg-transparent px-4 py-3 text-sm leading-6 text-[#e6edf3] placeholder:text-gray-600 focus:outline-none"
         />
     );
 }
@@ -126,13 +126,13 @@ function CellOutput({ output }) {
     const hasContent = output.stdout || output.stderr || output.result || output.html || output.images?.length || output.error;
     if (!hasContent) return null;
     return (
-        <div className="space-y-3 border-t border-[#2a2a2a] bg-[#0b100b] px-4 py-3 text-xs leading-5">
-            {output.stdout && <pre className="whitespace-pre-wrap break-words text-[#e8e8e8]">{output.stdout}</pre>}
+        <div className="space-y-3 border-t border-[#30363d] bg-[#0b100b] px-4 py-3 text-xs leading-5">
+            {output.stdout && <pre className="whitespace-pre-wrap break-words text-[#e6edf3]">{output.stdout}</pre>}
             {output.stderr && <pre className="whitespace-pre-wrap break-words text-amber-400">{output.stderr}</pre>}
             {output.html ? (
                 <div className="nb-html overflow-x-auto" dangerouslySetInnerHTML={{ __html: output.html }} />
             ) : (
-                output.result && <pre className="whitespace-pre-wrap break-words text-[#d0d0d0]">{output.result}</pre>
+                output.result && <pre className="whitespace-pre-wrap break-words text-[#c9d1d9]">{output.result}</pre>
             )}
             {output.images?.map((b64, i) => (
                 <img key={i} src={`data:image/png;base64,${b64}`} alt={`Plot output ${i + 1}`} className="max-w-full rounded bg-white" />
@@ -166,6 +166,7 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
     const [kernelStatus, setKernelStatus] = useState("loading"); // loading | ready | error
     const [kernelError, setKernelError] = useState("");
     const [files, setFiles] = useState([]);
+    const [fileContents, setFileContents] = useState({});
     const [kernelAttempt, setKernelAttempt] = useState(0);
     const pyRef = useRef(null);
     const cellsRef = useRef(cells);
@@ -276,7 +277,9 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
 
         const parts = [
             "Page: ML Notebook (Python runs in the browser via Pyodide; cells share variables)",
-            `Uploaded files: ${files.length ? files.join(", ") : "none"}`,
+            files.length
+                ? `Uploaded files:\n${files.map((n) => `${n}:\n${clip(fileContents[n] || "", 2000)}`).join("\n")}`
+                : "Uploaded files: none",
             `Cells: ${list.length}`,
         ];
         if (f) parts.push("FOCUS CELL:", cellBlock(f, focusIdx, true));
@@ -334,9 +337,17 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
         const py = pyRef.current;
         const picked = Array.from(event.target.files || []);
         if (!py || picked.length === 0) return;
+        const newContents = { ...fileContents };
         for (const f of picked) {
-            py.FS.writeFile(`/home/pyodide/${f.name}`, new Uint8Array(await f.arrayBuffer()));
+            const buffer = await f.arrayBuffer();
+            py.FS.writeFile(`/home/pyodide/${f.name}`, new Uint8Array(buffer));
+            try {
+                newContents[f.name] = new TextDecoder().decode(buffer);
+            } catch {
+                newContents[f.name] = `[binary file: ${f.name}]`;
+            }
         }
+        setFileContents(newContents);
         setFiles((current) => [...new Set([...current, ...picked.map((f) => f.name)])]);
         event.target.value = "";
     };
@@ -376,17 +387,17 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
     };
 
     const kernelBadge = () => {
-        if (kernelStatus === "loading") return { label: "Loading Python...", className: "border-[#5a5a5a] text-[#d0d0d0]" };
+        if (kernelStatus === "loading") return { label: "Loading Python...", className: "border-[#388bfd] text-[#c9d1d9]" };
         if (kernelStatus === "error") return { label: "Kernel failed", className: "border-red-800 text-red-400" };
         if (isBusy) return { label: "Busy", className: "border-amber-600 text-amber-400" };
-        return { label: "Ready", className: "border-[#8a8a8a] text-[#e8e8e8] bg-[#161616]" };
+        return { label: "Ready", className: "border-[#58a6ff] text-[#e6edf3] bg-[#161b22]" };
     };
     const badge = kernelBadge();
 
-    const toolbarBtn ="rounded-lg border border-[#2a2a2a] bg-[#111111] px-3 py-2 text-xs text-[#e8e8e8] transition hover:border-[#5a5a5a] disabled:cursor-not-allowed disabled:opacity-50";
-    const iconBtn = "rounded border border-transparent px-2 py-1 text-xs text-gray-500 transition hover:border-[#2a2a2a] hover:text-[#e8e8e8] disabled:opacity-30";
+    const toolbarBtn ="rounded-lg border border-[#30363d] bg-[#161b22] px-3 py-2 text-xs text-[#e6edf3] transition hover:border-[#388bfd] disabled:cursor-not-allowed disabled:opacity-50";
+    const iconBtn = "rounded border border-transparent px-2 py-1 text-xs text-gray-500 transition hover:border-[#30363d] hover:text-[#e6edf3] disabled:opacity-30";
     return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <style>{NOTEBOOK_STYLES}</style>
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
@@ -403,7 +414,7 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
                     </div>
                 </header>
 
-                <section className="mb-5 rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-4">
+                <section className="mb-5 rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-4">
                     <div className="flex flex-wrap items-center gap-2">
                         <button type="button" onClick={runAll} disabled={kernelStatus !== "ready" || isBusy} className={toolbarBtn}>Run all</button>
                         <button type="button" onClick={() => addCell(cells.length - 1)} className={toolbarBtn}>Add cell</button>
@@ -424,13 +435,13 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
                         <p className="mt-3 text-xs text-gray-500">First load downloads the Python runtime (around 10 MB). It is cached afterwards.</p>
                     )}
 
-                    <div className="mt-4 border-t border-[#2a2a2a] pt-4">
+                    <div className="mt-4 border-t border-[#30363d] pt-4">
                         <div className="flex flex-wrap items-center gap-2">
                             <input ref={fileInputRef} type="file" multiple accept=".csv,.json,.xlsx,.txt" className="hidden" onChange={handleUpload} />
-                            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={kernelStatus !== "ready"} className="rounded-lg border border-red-400 bg-red-400/10 px-3 py-2 text-xs text-[#e8e8e8] transition hover:bg-red-400 hover:border-red-500 hover:text-white disabled:opacity-50">Upload dataset</button>
+                            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={kernelStatus !== "ready"} className="rounded-lg border border-red-400 bg-red-400/10 px-3 py-2 text-xs text-[#e6edf3] transition hover:bg-red-400 hover:border-red-500 hover:text-white disabled:opacity-50">Upload dataset</button>
                             {files.length === 0 && <span className="text-xs text-gray-500">Uploaded files can be read by name, e.g. pd.read_csv("data.csv")</span>}
                             {files.map((name) => (
-                                <button key={name} type="button" onClick={() => insertReadSnippet(name)} title="Add a cell that loads this file" className="rounded border border-[#2a2a2a] bg-[#111111] px-2 py-1 text-xs text-[#d0d0d0] transition hover:border-[#5a5a5a]">{name}</button>
+                                <button key={name} type="button" onClick={() => insertReadSnippet(name)} title="Add a cell that loads this file" className="rounded border border-[#30363d] bg-[#161b22] px-2 py-1 text-xs text-[#c9d1d9] transition hover:border-[#388bfd]">{name}</button>
                             ))}
                         </div>
                     </div>
@@ -440,17 +451,17 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
                     {cells.map((cell, index) => {
                         const running = cell.status === "running";
                         const queued = cell.status === "queued";
-                        const borderColor = cell.status === "error" ? "border-red-800" : running || queued ? "border-[#5a5a5a]" : "border-[#2a2a2a]";
+                        const borderColor = cell.status === "error" ? "border-red-800" : running || queued ? "border-[#388bfd]" : "border-[#30363d]";
                         return (
-                            <div key={cell.id} className={`overflow-hidden rounded-xl border bg-[#111111] transition ${borderColor}`}>
-                                <div className="flex items-center justify-between border-b border-[#2a2a2a] bg-[#000000] px-3 py-1.5">
+                            <div key={cell.id} className={`overflow-hidden rounded-xl border bg-[#161b22] transition ${borderColor}`}>
+                                <div className="flex items-center justify-between border-b border-[#30363d] bg-[#0d1117] px-3 py-1.5">
                                     <span className="text-xs text-gray-500">In [{running ? "*" : queued ? "…" : cell.count ?? " "}]</span>
                                     <div className="flex items-center gap-1">
                                         <button type="button" onClick={() => shareWithAI(cell.id)}
-                                            className={`rounded border px-3 py-1 text-xs transition disabled:opacity-40 ${cell.status === "error" ? "border-red-800 text-red-300 hover:bg-red-600/20" : "border-[#2a2a2a] text-[#d0d0d0] hover:border-[#5a5a5a]"}`}>
+                                            className={`rounded border px-3 py-1 text-xs transition disabled:opacity-40 ${cell.status === "error" ? "border-red-800 text-red-300 hover:bg-red-600/20" : "border-[#30363d] text-[#c9d1d9] hover:border-[#388bfd]"}`}>
                                             {cell.status === "error" ? "Fix with AI" : "Ask AI"}
                                         </button>
-                                        <button type="button" onClick={() => enqueue(cell.id)} disabled={kernelStatus !== "ready" || running || queued} className="rounded border border-[#2a2a2a] px-3 py-1 text-xs text-[#e8e8e8] transition hover:border-gray-300 hover:bg-gray-300/10 disabled:opacity-40">Run</button>
+                                        <button type="button" onClick={() => enqueue(cell.id)} disabled={kernelStatus !== "ready" || running || queued} className="rounded border border-[#30363d] px-3 py-1 text-xs text-[#e6edf3] transition hover:border-gray-300 hover:bg-gray-300/10 disabled:opacity-40">Run</button>
                                         <button type="button" onClick={() => moveCell(index, -1)} disabled={index === 0} className={iconBtn} aria-label="Move cell up">Up</button>
                                         <button type="button" onClick={() => moveCell(index, 1)} disabled={index === cells.length - 1} className={iconBtn} aria-label="Move cell down">Down</button>
                                         <button type="button" onClick={() => addCell(index)} className={iconBtn} aria-label="Add cell below">Add below</button>
@@ -469,7 +480,7 @@ export default function MLNotebook({ onNavigate, theme = "black", onSelectTheme 
                     })}
                 </div>
 
-                <button type="button" onClick={() => addCell(cells.length - 1)} className="mt-4 w-full rounded-lg border border-dashed border-[#2a2a2a] px-4 py-3 text-xs text-gray-500 transition hover:border-[#5a5a5a] hover:text-[#e8e8e8]">Add cell</button>
+                <button type="button" onClick={() => addCell(cells.length - 1)} className="mt-4 w-full rounded-lg border border-dashed border-[#30363d] px-4 py-3 text-xs text-gray-500 transition hover:border-[#388bfd] hover:text-[#e6edf3]">Add cell</button>
             </section>
         </div>
     );

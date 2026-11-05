@@ -42,21 +42,21 @@ color-scheme: light;
 
 :root,
 [data-theme="black"] {
-  --page-bg: #000000;
+  --page-bg: #0d1117;
   --nav-bg: rgb(0 0 0 / 0.85);
   --card-bg: #0a0a0a;
-  --card-soft: #111111;
-  --card-line: #2a2a2a;
-  --deep-bg: #050505;
-  --raised-bg: #161616;
+  --card-soft: #161b22;
+  --card-line: #30363d;
+  --deep-bg: #010409;
+  --raised-bg: #161b22;
   --acc: #f2f2f2;
   --acc-soft: #c9c9c9;
-  --acc-deep: #5a5a5a;
-  --acc-thumb: #8a8a8a;
-  --on-acc: #000000;
-  --scroll: #8a8a8a;
+  --acc-deep: #388bfd;
+  --acc-thumb: #58a6ff;
+  --on-acc: #0d1117;
+  --scroll: #58a6ff;
   --scroll-hover: #b0b0b0;
-  --text-soft: #e8e8e8;
+  --text-soft: #e6edf3;
   --page-fg: #ffffff;
   --tint: rgb(255 255 255 / 0.08);
   --shadow: rgb(0 0 0 / 0.6);
@@ -194,64 +194,64 @@ body,
    Forest keeps the originals; the other themes are remapped. */
 :is([data-theme="snow"], [data-theme="black"]) {
   /* solid backgrounds */
-  .bg-\[\#000000\]     { background-color: var(--card-bg); }
-  .bg-\[\#000000\]\/80 { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
-  .bg-\[\#111111\]     { background-color: var(--card-soft); }
-  .bg-\[\#050505\]     { background-color: var(--deep-bg); }
-  .bg-\[\#161616\]     { background-color: var(--raised-bg); }
-  .bg-\[\#5a5a5a\],
-  .bg-\[\#8a8a8a\]     { background-color: var(--acc-thumb); }
-  .bg-\[\#d0d0d0\]     { background-color: var(--acc); color: var(--on-acc); }
+  .bg-\[\#0d1117\]     { background-color: var(--card-bg); }
+  .bg-\[\#0d1117\]\/80 { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
+  .bg-\[\#161b22\]     { background-color: var(--card-soft); }
+  .bg-\[\#010409\]     { background-color: var(--deep-bg); }
+  .bg-\[\#161b22\]     { background-color: var(--raised-bg); }
+  .bg-\[\#388bfd\],
+  .bg-\[\#58a6ff\]     { background-color: var(--acc-thumb); }
+  .bg-\[\#c9d1d9\]     { background-color: var(--acc); color: var(--on-acc); }
 
   /* translucent green backgrounds / borders / shadows (catch-all) */
-  [class*="bg-[#5a5a5a]/"],
-  [class*="bg-[#8a8a8a]/"],
-  [class*="bg-[#d0d0d0]/"] { background-color: var(--tint); }
-  [class*="bg-[#000000]/"],
-  [class*="bg-[#111111]/"] { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
-  [class*="border-[#5a5a5a]/"],
-  [class*="border-[#8a8a8a]/"],
-  [class*="border-[#d0d0d0]/"],
-  [class*="border-[#2a2a2a]/"] { border-color: var(--card-line); }
+  [class*="bg-[#388bfd]/"],
+  [class*="bg-[#58a6ff]/"],
+  [class*="bg-[#c9d1d9]/"] { background-color: var(--tint); }
+  [class*="bg-[#0d1117]/"],
+  [class*="bg-[#161b22]/"] { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
+  [class*="border-[#388bfd]/"],
+  [class*="border-[#58a6ff]/"],
+  [class*="border-[#c9d1d9]/"],
+  [class*="border-[#30363d]/"] { border-color: var(--card-line); }
   [class*="shadow-[#"] { --tw-shadow-color: var(--shadow); }
 
   /* borders */
-  .border-\[\#2a2a2a\] { border-color: var(--card-line); }
-  .border-\[\#5a5a5a\],
-  .border-\[\#8a8a8a\],
-  .border-\[\#d0d0d0\] { border-color: var(--acc-thumb); }
+  .border-\[\#30363d\] { border-color: var(--card-line); }
+  .border-\[\#388bfd\],
+  .border-\[\#58a6ff\],
+  .border-\[\#c9d1d9\] { border-color: var(--acc-thumb); }
 
   /* text */
-  .text-\[\#d0d0d0\]   { color: var(--acc); }
+  .text-\[\#c9d1d9\]   { color: var(--acc); }
   .text-\[\#c9c9c9\]   { color: var(--acc-soft); }
-  .text-\[\#e8e8e8\]   { color: var(--text-soft); }
-  .text-\[\#8a8a8a\]   { color: var(--acc-thumb); }
-  .text-\[\#5a5a5a\]   { color: var(--acc-deep); }
+  .text-\[\#e6edf3\]   { color: var(--text-soft); }
+  .text-\[\#58a6ff\]   { color: var(--acc-thumb); }
+  .text-\[\#388bfd\]   { color: var(--acc-deep); }
 
   /* gradients */
-  .from-\[\#d0d0d0\]   { --tw-gradient-from: var(--acc); }
-  .to-\[\#5a5a5a\]     { --tw-gradient-to: var(--acc-deep); }
+  .from-\[\#c9d1d9\]   { --tw-gradient-from: var(--acc); }
+  .to-\[\#388bfd\]     { --tw-gradient-to: var(--acc-deep); }
 
   /* hover / focus: background AND text are set together so values never vanish */
-  .hover\:bg-\[\#d0d0d0\]:hover,
-  .hover\:bg-\[\#d0d0d0\]:hover * {
+  .hover\:bg-\[\#c9d1d9\]:hover,
+  .hover\:bg-\[\#c9d1d9\]:hover * {
     background-color: transparent;
     color: var(--on-acc);
   }
-  .hover\:bg-\[\#d0d0d0\]:hover { background-color: var(--acc); }
+  .hover\:bg-\[\#c9d1d9\]:hover { background-color: var(--acc); }
 
-  .hover\:bg-\[\#5a5a5a\]:hover,
-  .hover\:bg-\[\#8a8a8a\]:hover { background-color: var(--acc-deep); color: var(--on-acc-deep, #fff); }
-  .hover\:bg-\[\#111111\]:hover,
-  .hover\:bg-\[\#161616\]:hover { background-color: var(--raised-bg); }
+  .hover\:bg-\[\#388bfd\]:hover,
+  .hover\:bg-\[\#58a6ff\]:hover { background-color: var(--acc-deep); color: var(--on-acc-deep, #fff); }
+  .hover\:bg-\[\#161b22\]:hover,
+  .hover\:bg-\[\#161b22\]:hover { background-color: var(--raised-bg); }
   .hover\:bg-white\/10:hover,
   .hover\:bg-white\/5:hover     { background-color: var(--tint); }
 
   .hover\:text-\[\#c9c9c9\]:hover,
-  .hover\:text-\[\#d0d0d0\]:hover { color: var(--acc); }
-  .hover\:border-\[\#8a8a8a\]:hover,
-  .hover\:border-\[\#5a5a5a\]:hover { border-color: var(--acc-thumb); }
-  .focus\:border-\[\#8a8a8a\]:focus { border-color: var(--acc-thumb); }
+  .hover\:text-\[\#c9d1d9\]:hover { color: var(--acc); }
+  .hover\:border-\[\#58a6ff\]:hover,
+  .hover\:border-\[\#388bfd\]:hover { border-color: var(--acc-thumb); }
+  .focus\:border-\[\#58a6ff\]:focus { border-color: var(--acc-thumb); }
 }
 
 /* ---------- Snow readability ---------- */
@@ -259,8 +259,8 @@ body,
   /* dark text on light surfaces, but never on solid accent/button backgrounds */
   .text-white:not(
     .t-btn, .t-btn *, .t-accent-bg, .t-accent-bg *,
-    [class*="bg-[#5a5a5a]"], [class*="bg-[#8a8a8a]"], [class*="bg-[#d0d0d0]"]
-  ) { color: #111111; }
+    [class*="bg-[#388bfd]"], [class*="bg-[#58a6ff]"], [class*="bg-[#c9d1d9]"]
+  ) { color: #161b22; }
   .text-gray-200 { color: #222222; }
   .text-gray-300 { color: #333333; }
   .text-gray-400 { color: #555555; }

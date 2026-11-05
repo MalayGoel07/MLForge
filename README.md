@@ -31,7 +31,7 @@ Other details:
 ### Context AI
 Some pages can share what you are looking at with the assistant:
 - **Compare Models:** click **Context AI** after a run. The assistant gets the dataset name, size, task, target, scaling, every model's metrics, the best model, and the first 10 rows of a CSV, then opens with a greeting.
-- **ML Notebook:** click **Context AI** in the toolbar, or **Ask AI** / **Fix with AI** on a single cell. It sends the focused cell's code, output and the end of any traceback, plus shortened versions of the other cells. Obvious secrets (API keys, tokens, passwords) are redacted before sending.
+- **ML Notebook:** click **Context AI** in the toolbar, or **Ask AI** / **Fix with AI** on a single cell. It sends the focused cell's code, output and the end of any traceback, plus shortened versions of the other cells and csv file. Obvious secrets (API keys, tokens, passwords) are redacted before sending.
 - The context is sent as a text summary (the backend keeps the first 6000 characters), not as the raw file. It is a snapshot: click again after changing results. It is not saved with the chat, and the chip above the message box removes it.
 
 ### ML Notebook

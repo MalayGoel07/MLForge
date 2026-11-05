@@ -8,8 +8,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 
 const INPUT_CLASS =
-    "w-full rounded-lg border border-[#2a2a2a] bg-[#050505] px-3 py-2 text-sm text-[#e8e8e8] outline-none transition placeholder:text-gray-600 focus:border-[#8a8a8a] disabled:opacity-50";
-const LABEL_CLASS = "mb-1.5 block text-xs uppercase tracking-[0.2em] text-[#d0d0d0]";
+    "w-full rounded-lg border border-[#30363d] bg-[#010409] px-3 py-2 text-sm text-[#e6edf3] outline-none transition placeholder:text-gray-600 focus:border-[#58a6ff] disabled:opacity-50";
+const LABEL_CLASS = "mb-1.5 block text-xs uppercase tracking-[0.2em] text-[#c9d1d9]";
 
 const errorMessage = (err) => {
     const detail = err.response?.data?.detail;
@@ -93,7 +93,7 @@ export default function LoginSignPage({ onNavigate, theme = "black", onSelectThe
     };
 
     return (
-        <div className="t-page page-no-overscroll flex min-h-screen flex-col overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll flex min-h-screen flex-col overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <div className="flex justify-end">
                 <ThemeButton onNavigate={onNavigate} showSettings={false} />
             </div>
@@ -108,7 +108,7 @@ export default function LoginSignPage({ onNavigate, theme = "black", onSelectThe
                         </p>
                     </header>
 
-                    <div className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-6 shadow-2xl shadow-[#161616]/20">
+                    <div className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-6 shadow-2xl shadow-[#161b22]/20">
                         <div className="mb-5 flex gap-2" role="group" aria-label="Choose login or sign up">
                             {[["login", "Log in"], ["signup", "Sign up"]].map(([key, label]) => (
                                 <button
@@ -116,7 +116,7 @@ export default function LoginSignPage({ onNavigate, theme = "black", onSelectThe
                                     type="button"
                                     aria-pressed={mode === key}
                                     onClick={() => switchMode(key)}
-                                    className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${mode === key ? "border-[#5a5a5a] bg-[#161616] text-white" : "border-[#2a2a2a] bg-[#111111] text-gray-400 hover:border-[#5a5a5a]"}`}
+                                    className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${mode === key ? "border-[#388bfd] bg-[#161b22] text-white" : "border-[#30363d] bg-[#161b22] text-gray-400 hover:border-[#388bfd]"}`}
                                 >
                                     {label}
                                 </button>
@@ -138,8 +138,8 @@ export default function LoginSignPage({ onNavigate, theme = "black", onSelectThe
 
                             <div>
                                 <div className="mb-1.5 flex items-center justify-between">
-                                    <label htmlFor="password" className="text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">Password</label>
-                                    <button type="button" onClick={() => setShowPassword((s) => !s)} className="text-[10px] text-gray-500 transition hover:text-[#d0d0d0]">
+                                    <label htmlFor="password" className="text-xs uppercase tracking-[0.2em] text-[#c9d1d9]">Password</label>
+                                    <button type="button" onClick={() => setShowPassword((s) => !s)} className="text-[10px] text-gray-500 transition hover:text-[#c9d1d9]">
                                         {showPassword ? "Hide" : "Show"}
                                     </button>
                                 </div>
@@ -176,7 +176,7 @@ export default function LoginSignPage({ onNavigate, theme = "black", onSelectThe
 
                     <p className="mt-4 text-center text-xs text-gray-500">
                         {isSignup ? "Already have an account? " : "New here? "}
-                        <button type="button" onClick={() => switchMode(isSignup ? "login" : "signup")} className="text-[#d0d0d0] underline-offset-2 transition hover:underline">
+                        <button type="button" onClick={() => switchMode(isSignup ? "login" : "signup")} className="text-[#c9d1d9] underline-offset-2 transition hover:underline">
                             {isSignup ? "Log in" : "Create one"}
                         </button>
                     </p>

@@ -21,19 +21,19 @@ const SCALING_OPTIONS = [
 /* ------------------------------------------------------------------ */
 /*  Small UI pieces                                                    */
 /* ------------------------------------------------------------------ */
-const inputCls = "w-full rounded-lg border border-[#2a2a2a] bg-[#111111] px-3 py-2 text-sm text-[#e8e8e8] placeholder:text-gray-600 focus:border-[#5a5a5a] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-[#30363d] bg-[#161b22] px-3 py-2 text-sm text-[#e6edf3] placeholder:text-gray-600 focus:border-[#388bfd] focus:outline-none";
 
 function Collapse({ title, badge, open, onToggle, children }) {
     return (
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#111111]">
-            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161616]">
+        <div className="rounded-lg border border-[#30363d] bg-[#161b22]">
+            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161b22]">
                 <span className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#e8e8e8]">{title}</span>
-                    {badge && <span className="rounded-md bg-[#000000] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
+                    <span className="text-sm font-semibold text-[#e6edf3]">{title}</span>
+                    {badge && <span className="rounded-md bg-[#0d1117] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
                 </span>
                 <span className={`text-sm text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
             </button>
-            {open && <div className="border-t border-[#2a2a2a] p-4">{children}</div>}
+            {open && <div className="border-t border-[#30363d] p-4">{children}</div>}
         </div>
     );
 }
@@ -41,7 +41,7 @@ function Collapse({ title, badge, open, onToggle, children }) {
 function StepHeader({ n, title, sub }) {
     return (
         <div className="mb-4 flex items-start gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#5a5a5a] bg-[#161616] text-xs font-bold text-[#e8e8e8]">{n}</span>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#388bfd] bg-[#161b22] text-xs font-bold text-[#e6edf3]">{n}</span>
             <div>
                 <h2 className="text-lg font-bold leading-7">{title}</h2>
                 {sub && <p className="text-xs leading-5 text-gray-500">{sub}</p>}
@@ -159,9 +159,9 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
 
     const statusBadge = (name) => {
         const entry = results[name];
-        if (!entry) return { label: "Pending", className: "border-[#2a2a2a] text-gray-500" };
-        if (entry.status === "running") return { label: "Running", className: "border-[#5a5a5a] text-[#d0d0d0]" };
-        if (entry.status === "done") return { label: "Done", className: "border-[#8a8a8a] text-[#e8e8e8] bg-[#161616]" };
+        if (!entry) return { label: "Pending", className: "border-[#30363d] text-gray-500" };
+        if (entry.status === "running") return { label: "Running", className: "border-[#388bfd] text-[#c9d1d9]" };
+        if (entry.status === "done") return { label: "Done", className: "border-[#58a6ff] text-[#e6edf3] bg-[#161b22]" };
         return { label: "Failed", className: "border-red-800 text-red-400" };
     };
 
@@ -221,7 +221,7 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
         });
     };
     return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
                     <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
@@ -239,10 +239,10 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
 
                 <div className="flex flex-col gap-5">
                     {/* ---------------- Step 1: upload ---------------- */}
-                    <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5 shadow-2xl shadow-[#161616]/20">
+                    <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5 shadow-2xl shadow-[#161b22]/20">
                         <StepHeader n="1" title="Upload your dataset" sub="CSV, JSON or XLSX. It should already be cleaned, and include the column you want to predict." />
                         <button type="button" onClick={shareWithAI} disabled={isRunning || doneCount === 0}
-                            className="mb-4 inline-flex items-center gap-2 rounded-lg border border-[#5a5a5a] bg-[#161616] px-3 py-2 text-xs font-semibold text-[#e8e8e8] transition hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-50">
+                            className="mb-4 inline-flex items-center gap-2 rounded-lg border border-[#388bfd] bg-[#161b22] px-3 py-2 text-xs font-semibold text-[#e6edf3] transition hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-50">
                             ✦ Context AI
                         </button>
                         <input ref={fileInputRef} type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
@@ -252,9 +252,9 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
                             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                             onDragLeave={() => setDragging(false)}
                             onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#8a8a8a] bg-[#161616]" : "border-[#2a2a2a] bg-[#111111] hover:border-[#5a5a5a]"}`}
+                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#58a6ff] bg-[#161b22]" : "border-[#30363d] bg-[#161b22] hover:border-[#388bfd]"}`}
                         >
-                            <span className="block text-sm font-semibold text-[#e8e8e8]">{fileName || "Drop a file here, or click to browse"}</span>
+                            <span className="block text-sm font-semibold text-[#e6edf3]">{fileName || "Drop a file here, or click to browse"}</span>
                             <span className="mt-1 block text-xs text-gray-500">{fileName ? "Click to choose a different file" : ".csv, .json or .xlsx"}</span>
                         </button>
                         {error && <p role="alert" className="mt-3 rounded-lg border border-red-800 bg-red-900/10 p-3 text-xs text-red-400">{error}</p>}
@@ -262,21 +262,21 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
 
                     {/* ---------------- Step 2: setup ---------------- */}
                     {file && (
-                        <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5">
+                        <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5">
                             <StepHeader n="2" title="Set up the comparison" sub="Choose the task and target, then open the sections below to pick models." />
 
                             <div className="grid grid-cols-2 gap-2 sm:max-w-md" role="radiogroup" aria-label="Task type">
                                 {["classification", "regression"].map((t) => {
                                     const on = taskType === t;
                                     return (
-                                        <button key={t} type="button" role="radio" aria-checked={on} onClick={() => changeTaskType(t)} className={`rounded-lg border px-3 py-2 text-sm capitalize transition ${on ? "border-[#8a8a8a] bg-[#161616] text-[#e8e8e8]" : "border-[#2a2a2a] bg-[#111111] text-gray-400 hover:border-[#5a5a5a]"}`}>{t}</button>
+                                        <button key={t} type="button" role="radio" aria-checked={on} onClick={() => changeTaskType(t)} className={`rounded-lg border px-3 py-2 text-sm capitalize transition ${on ? "border-[#58a6ff] bg-[#161b22] text-[#e6edf3]" : "border-[#30363d] bg-[#161b22] text-gray-400 hover:border-[#388bfd]"}`}>{t}</button>
                                     );
                                 })}
                             </div>
 
                             <div className="mt-4">
                                 <label className="block">
-                                    <span className="mb-1 block text-xs font-semibold text-[#d0d0d0]">Column you want to predict</span>
+                                    <span className="mb-1 block text-xs font-semibold text-[#c9d1d9]">Column you want to predict</span>
                                     <input type="text" value={targetColumn} onChange={(e) => setTargetColumn(e.target.value)} placeholder="e.g. price, label, class" className={`${inputCls} max-w-sm`} />
                                     <span className="mt-1 block text-[11px] text-gray-500">Must match a column name in your file exactly.</span>
                                 </label>
@@ -288,10 +288,10 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
                                         {visibleModels.map(({ name, description }) => {
                                             const selected = selectedModels.includes(name);
                                             return (
-                                                <button key={name} type="button" aria-pressed={selected} onClick={() => toggleModel(name)} className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition ${selected ? "border-[#5a5a5a] bg-[#161616]" : "border-[#2a2a2a] bg-[#000000] hover:border-[#5a5a5a]"}`}>
-                                                    <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${selected ? "border-[#8a8a8a] bg-[#5a5a5a] text-white" : "border-[#5a5a5a] text-transparent"}`}>+</span>
+                                                <button key={name} type="button" aria-pressed={selected} onClick={() => toggleModel(name)} className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition ${selected ? "border-[#388bfd] bg-[#161b22]" : "border-[#30363d] bg-[#0d1117] hover:border-[#388bfd]"}`}>
+                                                    <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${selected ? "border-[#58a6ff] bg-[#388bfd] text-white" : "border-[#388bfd] text-transparent"}`}>+</span>
                                                     <span>
-                                                        <span className="block text-sm font-semibold text-[#e8e8e8]">{name}</span>
+                                                        <span className="block text-sm font-semibold text-[#e6edf3]">{name}</span>
                                                         <span className="mt-1 block text-xs leading-5 text-gray-500">{description}</span>
                                                     </span>
                                                 </button>
@@ -310,12 +310,12 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
                                 </Collapse>
                             </div>
 
-                            <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
-                                <p className="text-xs font-semibold text-[#d0d0d0]">When you click Run, we will:</p>
+                            <div className="mt-4 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                                <p className="text-xs font-semibold text-[#c9d1d9]">When you click Run, we will:</p>
                                 <ul className="mt-2 space-y-1 text-xs leading-5 text-gray-400">
-                                    <li className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>Train {selectedModels.length || "no"} {taskType} model{selectedModels.length === 1 ? "" : "s"}{targetColumn.trim() ? ` to predict "${targetColumn.trim()}"` : ""}</li>
-                                    <li className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>Apply {scalingInfo?.label.toLowerCase()} to the features</li>
-                                    <li className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>Score each model on held-out test data</li>
+                                    <li className="flex gap-2"><span className="text-[#58a6ff]">✓</span>Train {selectedModels.length || "no"} {taskType} model{selectedModels.length === 1 ? "" : "s"}{targetColumn.trim() ? ` to predict "${targetColumn.trim()}"` : ""}</li>
+                                    <li className="flex gap-2"><span className="text-[#58a6ff]">✓</span>Apply {scalingInfo?.label.toLowerCase()} to the features</li>
+                                    <li className="flex gap-2"><span className="text-[#58a6ff]">✓</span>Score each model on held-out test data</li>
                                 </ul>
                             </div>
 
@@ -328,23 +328,23 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
 
                     {/* ---------------- Step 3: results ---------------- */}
                     {file && hasResults && (
-                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#2a2a2a] bg-[#111111] p-5">
+                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#30363d] bg-[#161b22] p-5">
                             <StepHeader n="3" title="Review the results" sub={isRunning ? "Training models..." : `${doneCount} of ${selectedModels.length} models finished`} />
 
                             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                                 {["Best score", "Best model", "Failed runs", "Test samples"].map((label) => (
-                                    <div key={label} className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
+                                    <div key={label} className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
                                         <p className="text-xs text-gray-500">{label}</p>
-                                        <p className="mt-2 truncate text-2xl font-bold text-[#d0d0d0]">{cardValues[label]}</p>
+                                        <p className="mt-2 truncate text-2xl font-bold text-[#c9d1d9]">{cardValues[label]}</p>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="mt-4">
                                 <Collapse title="Model metrics table" badge={`${selectedModels.length} models`} open={showTable} onToggle={() => setShowTable((v) => !v)}>
-                                    <div className="overflow-x-auto rounded-lg border border-[#2a2a2a]">
+                                    <div className="overflow-x-auto rounded-lg border border-[#30363d]">
                                         <table className="w-full min-w-[620px] text-left text-sm">
-                                            <thead className="bg-[#161616] text-xs uppercase tracking-[0.12em] text-[#d0d0d0]">
+                                            <thead className="bg-[#161b22] text-xs uppercase tracking-[0.12em] text-[#c9d1d9]">
                                                 <tr>
                                                     <th className="px-4 py-3 font-normal">Model</th>
                                                     {displayMetrics.map((metric) => <th key={metric} className="px-4 py-3 text-right font-normal">{metric}</th>)}
@@ -357,7 +357,7 @@ export default function CompareModel({ onNavigate, theme = "black", onSelectThem
                                                     const badge = statusBadge(name);
                                                     const selectedTask = modelTask[name] === "both" ? taskType : modelTask[name];
                                                     return (
-                                                        <tr key={name} className="border-t border-[#2a2a2a] bg-[#111111] text-[#e8e8e8]">
+                                                        <tr key={name} className="border-t border-[#30363d] bg-[#161b22] text-[#e6edf3]">
                                                             <td className="px-4 py-4 font-semibold">{name}</td>
                                                             {displayMetrics.map((metric) => {
                                                                 const applies = METRIC_SETS[selectedTask]?.includes(metric);

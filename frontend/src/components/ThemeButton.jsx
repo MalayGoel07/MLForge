@@ -6,7 +6,7 @@ export const THEME_KEY = "mlforge-theme";
 
 export const THEMES = [
   { id: "snow", label: "White", dot: "#ffffff" },
-  { id: "black", label: "Black", dot: "#000000" },
+  { id: "black", label: "Black", dot: "#0d1117" },
 ];
 
 export function getTheme(id) {

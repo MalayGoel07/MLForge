@@ -31,7 +31,7 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
   };
 
   return (
-    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none text-white font-sans pt-14 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none text-white font-sans pt-14 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
       <nav className="t-nav fixed top-0 left-0 w-full flex items-center justify-between px-6 py-4 border-b backdrop-blur-md z-50">
         <span className="text-xl font-bold tracking-tight">
           <span className="t-accent">ML</span>
@@ -44,39 +44,39 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
         </div>
         <div className="flex items-center gap-3">
           <ThemeButton onNavigate={onNavigate} showSettings={false} />
-          <button onClick={()=> navigate("/home")} className="t-btn bg-[#8a8a8a] hover:bg-[#5a5a5a] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
+          <button onClick={()=> navigate("/home")} className="t-btn bg-[#58a6ff] hover:bg-[#388bfd] text-white text-sm px-4 py-1.5 rounded-lg transition-colors">Get Started</button>
         </div>
       </nav>
 
       <section className="max-w-5xl mx-auto pt-6 pb-6 text-center backdrop-blur-sm z-50">
-        <div className="inline-flex items-center gap-2 bg-[#000000] border border-[#2a2a2a] rounded-full px-4 py-1.5 text-xs text-[#c9c9c9] mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#d0d0d0] animate-pulse inline-block"></span>
+        <div className="inline-flex items-center gap-2 bg-[#0d1117] border border-[#30363d] rounded-full px-4 py-1.5 text-xs text-[#c9c9c9] mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#c9d1d9] animate-pulse inline-block"></span>
           Multi-model ML WorkShop
         </div>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4 leading-tight"> One interface
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d0d0d0] to-[#5a5a5a]"> Many Models</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#c9d1d9] to-[#388bfd]"> Many Models</span>
         </h1>
         <p className="text-gray-400 text-[16px] max-w-xl mx-auto mb-10">MlForge routes your data to the right data management system, then give details and distributes data to all available models.</p>
         <div className="flex items-center justify-center gap-4">
-          <button onClick={()=> navigate("/home")} className="bg-[#5a5a5a] hover:bg-[#444444] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Start Testing</button>
-          <a href="#models" className="border border-[#5a5a5a] hover:border-[#b0b0b0] text-gray-300 hover:text-white px-6 py-2.5 rounded-lg font-medium transition-colors">View Models</a>
+          <button onClick={()=> navigate("/home")} className="bg-[#388bfd] hover:bg-[#444444] text-white px-6 py-2.5 rounded-lg font-medium transition-colors">Start Testing</button>
+          <a href="#models" className="border border-[#388bfd] hover:border-[#b0b0b0] text-gray-300 hover:text-white px-6 py-2.5 rounded-lg font-medium transition-colors">View Models</a>
         </div>
       </section>
 
       <section id="demo" className="max-w-4xl mx-auto px-8 pb-8 backdrop-blur-sm z-50">
-        <div className="bg-[#050505] border border-[#2a2a2a] rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2a2a]">
+        <div className="bg-[#010409] border border-[#30363d] rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#30363d]">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#d0d0d0]"></span>
-              <span className="text-[#d0d0d0] font-bold text-sm tracking-wide">MlForge</span>
+              <span className="w-2 h-2 rounded-full bg-[#c9d1d9]"></span>
+              <span className="text-[#c9d1d9] font-bold text-sm tracking-wide">MlForge</span>
             </div>
-            <div className="w-7 h-7 rounded-full bg-[#2a2a2a] flex items-center justify-center text-xs text-gray-300">P</div>
+            <div className="w-7 h-7 rounded-full bg-[#30363d] flex items-center justify-center text-xs text-gray-300">P</div>
           </div>
           <div className="p-6 space-y-4">
-            <div className="bg-[#050505] border border-[#2a2a2a] rounded-xl overflow-hidden text-sm text-gray-300">
+            <div className="bg-[#010409] border border-[#30363d] rounded-xl overflow-hidden text-sm text-gray-300">
               <div className="max-h-[320px] overflow-auto">
                 <table className="w-full min-w-[560px] border-collapse text-left">
-                  <thead className="sticky top-0 bg-[#000000] text-gray-300 text-xs uppercase tracking-widest">
+                  <thead className="sticky top-0 bg-[#0d1117] text-gray-300 text-xs uppercase tracking-widest">
                     <tr>
                       <th className="px-4 py-3 font-semibold">Serial No.</th>
                       <th className="px-4 py-3 font-semibold">CGPA</th>
@@ -86,11 +86,11 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
                   </thead>
                   <tbody>
                     {placementRows.map((row) => (
-                      <tr key={row.serialNo} className="border-t border-[#2a2a2a] hover:bg-[#000000] transition-colors">
+                      <tr key={row.serialNo} className="border-t border-[#30363d] hover:bg-[#0d1117] transition-colors">
                         <td className="px-4 py-3 font-mono text-gray-400">{row.serialNo}</td>
                         <td className="px-4 py-3">{row.cgpa}</td>
                         <td className="px-4 py-3">{row.iq}</td>
-                        <td className="px-4 py-3 text-[#d0d0d0] font-medium">{row.placementPossibility}</td>
+                        <td className="px-4 py-3 text-[#c9d1d9] font-medium">{row.placementPossibility}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -98,16 +98,16 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
               </div>
             </div>
 
-            <div className="bg-[#111111] border border-[#2a2a2a] rounded-xl p-4">
+            <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[#d0d0d0] font-semibold text-xs uppercase tracking-widest">ML Model Accuracy</span>
+                <span className="text-[#c9d1d9] font-semibold text-xs uppercase tracking-widest">ML Model Accuracy</span>
                 <span className="text-gray-500 text-xs">Latest run</span>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 {modelAccuracies.map((item) => (
-                  <div key={item.model} className="flex items-center justify-between rounded-lg bg-[#000000] border border-[#2a2a2a] px-4 py-3">
+                  <div key={item.model} className="flex items-center justify-between rounded-lg bg-[#0d1117] border border-[#30363d] px-4 py-3">
                     <span className="text-sm text-gray-300">{item.model}</span>
-                    <span className="text-sm font-semibold text-[#d0d0d0]">{item.accuracy}</span>
+                    <span className="text-sm font-semibold text-[#c9d1d9]">{item.accuracy}</span>
                   </div>
                 ))}
               </div>
@@ -121,7 +121,7 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
       </section>
 
       <section id="features" className="max-w-5xl mx-auto px-8 pb-10 backdrop-blur-sm z-50">
-        <p className="text-xs tracking-widest text-[#d0d0d0] uppercase mb-3 text-center">Why MlForge</p>
+        <p className="text-xs tracking-widest text-[#c9d1d9] uppercase mb-3 text-center">Why MlForge</p>
         <h2 className="text-3xl font-bold text-center mb-8">Built different</h2>
         <div className="grid md:grid-cols-3 gap-5">
           {[
@@ -129,8 +129,8 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
             { title: "ML Models", desc: "Dedicated models for Regression and Classification run in parallel for the task at hand.", icon: "◈" },
             { title: "Ultima Output", desc: "ML model synthesizes output responses into one table, with final accuracies.", icon: "⊕" },
           ].map((f) => (
-            <div key={f.title} className="bg-[#000000] border border-[#2a2a2a] rounded-xl p-6 hover:border-[#8a8a8a]/40 transition-colors">
-              <div className="text-2xl mb-4 text-[#d0d0d0]">{f.icon}</div>
+            <div key={f.title} className="bg-[#0d1117] border border-[#30363d] rounded-xl p-6 hover:border-[#58a6ff]/40 transition-colors">
+              <div className="text-2xl mb-4 text-[#c9d1d9]">{f.icon}</div>
               <h3 className="font-semibold mb-2">{f.title}</h3>
               <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
             </div>
@@ -139,11 +139,11 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
       </section>
 
       <section id="models" className="max-w-5xl mx-auto px-8 pb-8 backdrop-blur-sm z-50">
-        <p className="text-xs tracking-widest text-[#d0d0d0] uppercase mb-3 text-center">Under the hood</p>
+        <p className="text-xs tracking-widest text-[#c9d1d9] uppercase mb-3 text-center">Under the hood</p>
         <h2 className="text-3xl font-bold text-center mb-8">The Models lineup</h2>
-        <div className="bg-[#000000] border border-[#2a2a2a] rounded-2xl overflow-hidden">
+        <div className="bg-[#0d1117] border border-[#30363d] rounded-2xl overflow-hidden">
           {models.map((m, i) => (
-            <div key={m.role} className={`flex items-center justify-between px-6 py-4 text-sm ${i < models.length - 1 ? "border-b border-[#2a2a2a]" : ""} hover:bg-[#111111] transition-colors`} >
+            <div key={m.role} className={`flex items-center justify-between px-6 py-4 text-sm ${i < models.length - 1 ? "border-b border-[#30363d]" : ""} hover:bg-[#161b22] transition-colors`} >
               <span className="text-white font-medium">{m.role}</span>
               <div className="flex items-center gap-2 text-gray-400 font-mono text-xs">
                 {m.model}
@@ -154,14 +154,14 @@ export default function CBXLanding({ onNavigate, theme = "black", onSelectTheme 
         </div>
       </section>
 
-      <section className="border-t border-[#161616] py-8 text-center px-8 backdrop-blur-sm z-50">
+      <section className="border-t border-[#161b22] py-8 text-center px-8 backdrop-blur-sm z-50">
         <h2 className="text-3xl font-bold mb-4">Ready to try models?</h2>
         <p className="text-gray-400 mb-8 max-w-md mx-auto text-sm">MlForge brings together all the ML models and perform proper data management.</p>
-        <button onClick={()=> navigate("/home")} className="bg-[#5a5a5a] hover:bg-[#444444] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch MlForge</button>
+        <button onClick={()=> navigate("/home")} className="bg-[#388bfd] hover:bg-[#444444] text-white px-8 py-3 rounded-lg font-medium transition-colors">Launch MlForge</button>
       </section>
 
-      <footer className="border-t border-[#161616] px-8 py-6 flex items-center justify-between text-xs text-gray-600 backdrop-blur-sm z-50">
-        <span><span className="text-[#d0d0d0]">WorkShop</span><span className="text-[#d0d0d0]">-X</span><span> : </span><span>Multi-model ML visualization system</span></span>
+      <footer className="border-t border-[#161b22] px-8 py-6 flex items-center justify-between text-xs text-gray-600 backdrop-blur-sm z-50">
+        <span><span className="text-[#c9d1d9]">WorkShop</span><span className="text-[#c9d1d9]">-X</span><span> : </span><span>Multi-model ML visualization system</span></span>
         <span>Multi-model | ML</span>
       </footer>
     </div>

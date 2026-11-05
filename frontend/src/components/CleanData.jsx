@@ -131,11 +131,11 @@ function findings(profile) {
 /* ------------------------------------------------------------------ */
 /*  Small UI pieces                                                    */
 /* ------------------------------------------------------------------ */
-const inputCls = "w-full rounded-lg border border-[#2a2a2a] bg-[#111111] px-2 py-1.5 text-xs text-[#e8e8e8] focus:border-[#5a5a5a] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#e6edf3] focus:border-[#388bfd] focus:outline-none";
 
 function Switch({ checked, onChange, label }) {
     return (
-        <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={`relative h-5 w-9 shrink-0 rounded-full border transition ${checked ? "border-[#8a8a8a] bg-[#5a5a5a]" : "border-[#2a2a2a] bg-[#111111]"}`}>
+        <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={`relative h-5 w-9 shrink-0 rounded-full border transition ${checked ? "border-[#58a6ff] bg-[#388bfd]" : "border-[#30363d] bg-[#161b22]"}`}>
             <span className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white transition-all ${checked ? "left-[18px]" : "left-0.5"}`} />
         </button>
     );
@@ -175,10 +175,10 @@ function TextField({ label, value, onChange }) {
 
 function StepCard({ title, description, enabled, onToggle, children }) {
     return (
-        <div className={`rounded-lg border p-3 transition ${enabled ? "border-[#5a5a5a] bg-[#161616]" : "border-[#2a2a2a] bg-[#111111]"}`}>
+        <div className={`rounded-lg border p-3 transition ${enabled ? "border-[#388bfd] bg-[#161b22]" : "border-[#30363d] bg-[#161b22]"}`}>
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <p className="text-sm font-semibold text-[#e8e8e8]">{title}</p>
+                    <p className="text-sm font-semibold text-[#e6edf3]">{title}</p>
                     <p className="mt-0.5 text-xs leading-5 text-gray-500">{description}</p>
                 </div>
                 <Switch checked={enabled} onChange={onToggle} label={title} />
@@ -190,15 +190,15 @@ function StepCard({ title, description, enabled, onToggle, children }) {
 
 function Collapse({ title, badge, open, onToggle, children }) {
     return (
-        <div className="rounded-lg border border-[#2a2a2a] bg-[#111111]">
-            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161616]">
+        <div className="rounded-lg border border-[#30363d] bg-[#161b22]">
+            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161b22]">
                 <span className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#e8e8e8]">{title}</span>
-                    {badge && <span className="rounded-md bg-[#000000] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
+                    <span className="text-sm font-semibold text-[#e6edf3]">{title}</span>
+                    {badge && <span className="rounded-md bg-[#0d1117] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
                 </span>
                 <span className={`text-sm text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
             </button>
-            {open && <div className="border-t border-[#2a2a2a] p-4">{children}</div>}
+            {open && <div className="border-t border-[#30363d] p-4">{children}</div>}
         </div>
     );
 }
@@ -206,7 +206,7 @@ function Collapse({ title, badge, open, onToggle, children }) {
 function StepHeader({ n, title, sub }) {
     return (
         <div className="mb-4 flex items-start gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#5a5a5a] bg-[#161616] text-xs font-bold text-[#e8e8e8]">{n}</span>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#388bfd] bg-[#161b22] text-xs font-bold text-[#e6edf3]">{n}</span>
             <div>
                 <h2 className="text-lg font-bold leading-7">{title}</h2>
                 {sub && <p className="text-xs leading-5 text-gray-500">{sub}</p>}
@@ -225,7 +225,7 @@ function SkewChart({ before, after }) {
                 const a = afterMap[c.name];
                 return (
                     <div key={c.name} className="grid grid-cols-[110px_1fr_90px] items-center gap-3">
-                        <span className="truncate text-xs text-[#e8e8e8]" title={c.name}>{c.name}</span>
+                        <span className="truncate text-xs text-[#e6edf3]" title={c.name}>{c.name}</span>
                         <div className="space-y-1.5">
                             <SkewBar value={c.skew} />
                             {a ? <SkewBar value={a.skew} /> : <p className="text-[10px] text-gray-600">column removed</p>}
@@ -386,12 +386,12 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
         const d = +(a - b).toFixed(3);
         if (d === 0) return <span className="text-[10px] text-gray-500">no change</span>;
         const good = !neutral && d < 0;
-        const cls = neutral ? "text-gray-400" : good ? "text-[#8a8a8a]" : "text-red-400";
+        const cls = neutral ? "text-gray-400" : good ? "text-[#58a6ff]" : "text-red-400";
         return <span className={`text-[10px] ${cls}`}>{d > 0 ? "+" : ""}{fmt(d)}</span>;
     };
 
     return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
                     <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
@@ -409,7 +409,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
 
                 <div className="flex flex-col gap-5">
                     {/* ---------------- Step 1: upload ---------------- */}
-                    <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5 shadow-2xl shadow-[#161616]/20">
+                    <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5 shadow-2xl shadow-[#161b22]/20">
                         <StepHeader n="1" title="Upload your dataset" sub="CSV, JSON or XLSX. Nothing changes until you click Clean." />
                         <input ref={fileInputRef} type="file" accept=".csv,.json,.xlsx" className="hidden" onChange={(e) => handleFile(e.target.files[0])} />
                         <button
@@ -418,19 +418,19 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                             onDragLeave={() => setDragging(false)}
                             onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#8a8a8a] bg-[#161616]" : "border-[#2a2a2a] bg-[#111111] hover:border-[#5a5a5a]"}`}
+                            className={`w-full rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-[#58a6ff] bg-[#161b22]" : "border-[#30363d] bg-[#161b22] hover:border-[#388bfd]"}`}
                         >
-                            <span className="block text-sm font-semibold text-[#e8e8e8]">{fileName || "Drop a file here, or click to browse"}</span>
+                            <span className="block text-sm font-semibold text-[#e6edf3]">{fileName || "Drop a file here, or click to browse"}</span>
                             <span className="mt-1 block text-xs text-gray-500">{isProfiling ? "Reading dataset..." : fileName ? "Click to choose a different file" : ".csv, .json or .xlsx"}</span>
                         </button>
                         {error && <p role="alert" className="mt-3 rounded-lg border border-red-800 bg-red-900/10 p-3 text-xs text-red-400">{error}</p>}
 
                         {profile && (
-                            <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
-                                <p className="text-sm font-semibold text-[#e8e8e8]">{fmt(profile.summary.rows)} rows, {profile.summary.cols} columns</p>
+                            <div className="mt-4 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                                <p className="text-sm font-semibold text-[#e6edf3]">{fmt(profile.summary.rows)} rows, {profile.summary.cols} columns</p>
                                 <p className="mb-2 mt-1 text-xs text-gray-500">What we found:</p>
                                 {issues.length === 0 ? (
-                                    <p className="text-xs text-[#8a8a8a]">No obvious problems. This dataset already looks clean.</p>
+                                    <p className="text-xs text-[#58a6ff]">No obvious problems. This dataset already looks clean.</p>
                                 ) : (
                                     <ul className="space-y-1.5 text-xs leading-5 text-gray-400">
                                         {issues.map((t) => (
@@ -444,35 +444,35 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
 
                     {/* ---------------- Step 2: choose ---------------- */}
                     {profile && (
-                        <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5">
+                        <section className="rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5">
                             <StepHeader n="2" title="Choose how to clean" sub="Pick a starting point. You can change any step afterwards." />
 
                             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4" role="radiogroup" aria-label="Cleaning preset">
                                 {PRESETS.map(({ id, title, desc }) => {
                                     const on = preset === id;
                                     return (
-                                        <button key={id} type="button" role="radio" aria-checked={on} onClick={() => applyPreset(id)} className={`rounded-lg border p-3 text-left transition ${on ? "border-[#8a8a8a] bg-[#161616]" : "border-[#2a2a2a] bg-[#111111] hover:border-[#5a5a5a]"}`}>
-                                            <p className="text-sm font-semibold text-[#e8e8e8]">{title}{id === "smart" && <span className="ml-2 rounded bg-[#5a5a5a]/30 px-1.5 py-0.5 text-[9px] text-[#d0d0d0]">Recommended</span>}</p>
+                                        <button key={id} type="button" role="radio" aria-checked={on} onClick={() => applyPreset(id)} className={`rounded-lg border p-3 text-left transition ${on ? "border-[#58a6ff] bg-[#161b22]" : "border-[#30363d] bg-[#161b22] hover:border-[#388bfd]"}`}>
+                                            <p className="text-sm font-semibold text-[#e6edf3]">{title}{id === "smart" && <span className="ml-2 rounded bg-[#388bfd]/30 px-1.5 py-0.5 text-[9px] text-[#c9d1d9]">Recommended</span>}</p>
                                             <p className="mt-1 text-[11px] leading-4 text-gray-500">{desc}</p>
                                         </button>
                                     );
                                 })}
                             </div>
 
-                            <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
-                                <p className="text-xs font-semibold text-[#d0d0d0]">When you click Clean, we will:</p>
+                            <div className="mt-4 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                                <p className="text-xs font-semibold text-[#c9d1d9]">When you click Clean, we will:</p>
                                 {plan.length === 0 ? (
                                     <p className="mt-2 text-xs text-gray-500">Nothing. The dataset would be returned unchanged.</p>
                                 ) : (
                                     <ul className="mt-2 space-y-1 text-xs leading-5 text-gray-400">
-                                        {plan.map((t) => <li key={t} className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>{t}</li>)}
+                                        {plan.map((t) => <li key={t} className="flex gap-2"><span className="text-[#58a6ff]">✓</span>{t}</li>)}
                                     </ul>
                                 )}
                             </div>
 
                             <div className="mt-4">
                                 <label className="block">
-                                    <span className="mb-1 block text-xs font-semibold text-[#d0d0d0]">Column you want to predict (optional)</span>
+                                    <span className="mb-1 block text-xs font-semibold text-[#c9d1d9]">Column you want to predict (optional)</span>
                                     <select value={target} onChange={(e) => setTarget(e.target.value)} className={`${inputCls} max-w-sm`}>
                                         <option value="">None, or not sure yet</option>
                                         {profile.columns.map(({ name }) => <option key={name} value={name}>{name}</option>)}
@@ -485,7 +485,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                 <Collapse title="Customize each step" badge={`${stepsOn} on`} open={showCustom} onToggle={() => setShowCustom((v) => !v)}>
                                     <div className="space-y-5">
                                         <div>
-                                            <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">Tidy up</p>
+                                            <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">Tidy up</p>
                                             <div className="space-y-2">
                                                 <StepCard title="Trim text" description="Remove extra spaces and treat blank cells as missing." enabled={config.trim_text} onToggle={(v) => setFlag("trim_text", v)}>
                                                     <label className="flex items-center gap-2 text-xs text-gray-400">
@@ -499,7 +499,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                         </div>
 
                                         <div>
-                                            <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">Missing data</p>
+                                            <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">Missing data</p>
                                             <div className="space-y-2">
                                                 <StepCard title="Drop mostly-empty columns" description="Remove columns with too many gaps to be useful." enabled={config.drop_missing_cols.enabled} onToggle={(v) => setStep("drop_missing_cols", { enabled: v })}>
                                                     <NumberField label="Drop a column when it is more than this % empty" value={config.drop_missing_cols.threshold} min={0} max={100} onChange={(v) => setStep("drop_missing_cols", { threshold: v })} />
@@ -516,7 +516,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                         </div>
 
                                         <div>
-                                            <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">Unusual values</p>
+                                            <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">Unusual values</p>
                                             <div className="space-y-2">
                                                 <StepCard title="Handle extreme values" description="Deal with numbers far outside the typical range." enabled={config.outliers.enabled} onToggle={(v) => setStep("outliers", { enabled: v })}>
                                                     <Select label="Method" value={config.outliers.method} options={OUTLIER_METHODS} onChange={(v) => setStep("outliers", { method: v })} />
@@ -537,7 +537,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                         </div>
 
                                         <div>
-                                            <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">Prepare for models</p>
+                                            <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">Prepare for models</p>
                                             <StepCard title="Turn text into numbers" description="Only needed if you train outside MlForge. Compare Models does this for you." enabled={config.encode.enabled} onToggle={(v) => setStep("encode", { enabled: v })}>
                                                 <Select label="Encoding" value={config.encode.method} options={ENCODE_METHODS} onChange={(v) => setStep("encode", { method: v })} />
                                             </StepCard>
@@ -552,7 +552,7 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                             const isTarget = name === target;
                                             const on = isTarget || protectedCols.includes(name);
                                             return (
-                                                <button key={name} type="button" aria-pressed={on} disabled={isTarget} onClick={() => toggleProtect(name)} className={`rounded border px-2 py-1 text-[11px] transition disabled:cursor-not-allowed ${on ? "border-red-400 bg-red-400/10 text-red-300" : "border-[#2a2a2a] bg-[#000000] text-gray-400 hover:border-[#5a5a5a]"}`}>{name}</button>
+                                                <button key={name} type="button" aria-pressed={on} disabled={isTarget} onClick={() => toggleProtect(name)} className={`rounded border px-2 py-1 text-[11px] transition disabled:cursor-not-allowed ${on ? "border-red-400 bg-red-400/10 text-red-300" : "border-[#30363d] bg-[#0d1117] text-gray-400 hover:border-[#388bfd]"}`}>{name}</button>
                                             );
                                         })}
                                     </div>
@@ -561,26 +561,26 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
 
                             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <button type="button" onClick={runCleaning} disabled={isRunning} className="flex-1 rounded-lg border border-gray-400/60 bg-gray-400/10 px-4 py-3 text-sm font-semibold text-white transition hover:border-gray-300 hover:bg-gray-300/20 disabled:cursor-not-allowed disabled:opacity-50">{isRunning ? "Cleaning..." : dirty ? "Clean again with these settings" : "Clean dataset"}</button>
-                                <button type="button" onClick={resetAll} className="rounded-lg border border-[#2a2a2a] px-4 py-3 text-xs text-gray-400 transition hover:border-[#5a5a5a] hover:text-[#e8e8e8]">Reset settings</button>
+                                <button type="button" onClick={resetAll} className="rounded-lg border border-[#30363d] px-4 py-3 text-xs text-gray-400 transition hover:border-[#388bfd] hover:text-[#e6edf3]">Reset settings</button>
                             </div>
                         </section>
                     )}
 
                     {/* ---------------- Step 3: results ---------------- */}
                     {result && (
-                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5">
+                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#30363d] bg-[#0d1117]/80 p-5">
                             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                                 <StepHeader n="3" title="Review the result" sub={`${fmt(result.before.summary.rows)} rows → ${fmt(result.after.summary.rows)} rows, ${result.before.summary.cols} columns → ${result.after.summary.cols} columns`} />
-                                <button type="button" onClick={downloadCsv} className="shrink-0 rounded-lg border border-gray-400 bg-gray-400/10 px-4 py-2 text-sm font-semibold text-[#e8e8e8] transition hover:bg-gray-500">Download cleaned CSV</button>
+                                <button type="button" onClick={downloadCsv} className="shrink-0 rounded-lg border border-gray-400 bg-gray-400/10 px-4 py-2 text-sm font-semibold text-[#e6edf3] transition hover:bg-gray-500">Download cleaned CSV</button>
                             </div>
 
                             {dirty && <p className="mb-4 rounded-lg border border-[#d9b45a]/40 bg-[#d9b45a]/10 p-3 text-xs text-[#d9b45a]">You changed the settings after this run. Click "Clean again" above to update these results.</p>}
 
                             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                 {SUMMARY_FIELDS.map(({ key, label, neutral, tip }) => (
-                                    <div key={key} title={tip} className="rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
+                                    <div key={key} title={tip} className="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
                                         <p className="text-xs text-gray-500">{label}</p>
-                                        <p className="mt-2 truncate text-2xl font-bold text-[#d0d0d0]">
+                                        <p className="mt-2 truncate text-2xl font-bold text-[#c9d1d9]">
                                             {fmt(result.before.summary[key])}
                                             <span className="text-base text-gray-500"> → {fmt(result.after.summary[key])}</span>
                                         </p>
@@ -590,10 +590,10 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                             </div>
 
                             {result.log?.length > 0 && (
-                                <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
-                                    <p className="mb-2 text-xs font-semibold text-[#d0d0d0]">What changed</p>
+                                <div className="mt-4 rounded-lg border border-[#30363d] bg-[#161b22] p-4">
+                                    <p className="mb-2 text-xs font-semibold text-[#c9d1d9]">What changed</p>
                                     <ul className="space-y-1 text-xs leading-5 text-gray-400">
-                                        {result.log.map((line, i) => <li key={i} className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>{line}</li>)}
+                                        {result.log.map((line, i) => <li key={i} className="flex gap-2"><span className="text-[#58a6ff]">✓</span>{line}</li>)}
                                     </ul>
                                 </div>
                             )}
@@ -615,8 +615,8 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                     </div>
 
                                     <div className="grid gap-4 lg:grid-cols-2">
-                                        <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                            <p className="text-xs font-semibold text-[#d0d0d0]">Boxplot</p>
+                                        <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                            <p className="text-xs font-semibold text-[#c9d1d9]">Boxplot</p>
                                             <p className="mb-2 text-[11px] text-gray-500">The box holds the middle half of the values. The white line is the median. Red dots are unusual values.</p>
                                             {!afterCol && <p className="mb-2 text-xs text-gray-500">This column was removed by the pipeline.</p>}
                                             <BoxPlot before={beforeCol} after={afterCol} shared={sharedScale} />
@@ -630,8 +630,8 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                             )}
                                         </div>
 
-                                        <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
-                                            <p className="text-xs font-semibold text-[#d0d0d0]">Histogram</p>
+                                        <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4">
+                                            <p className="text-xs font-semibold text-[#c9d1d9]">Histogram</p>
                                             <p className="mb-2 text-[11px] text-gray-500">Taller bars mean more values in that range. A balanced column looks like a hill.</p>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <Hist h={beforeCol?.hist} color={BEFORE_COLOR} title="Before" />
@@ -639,8 +639,8 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                             </div>
                                         </div>
 
-                                        <div className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4 lg:col-span-2">
-                                            <p className="mb-3 text-xs font-semibold text-[#d0d0d0]">Skewness per column</p>
+                                        <div className="rounded-lg border border-[#30363d] bg-[#0d1117] p-4 lg:col-span-2">
+                                            <p className="mb-3 text-xs font-semibold text-[#c9d1d9]">Skewness per column</p>
                                             <SkewChart before={result.before} after={result.after} />
                                         </div>
                                     </div>
@@ -648,9 +648,9 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
 
                                 <Collapse title="Tables: missing values and preview" open={showTables} onToggle={() => setShowTables((v) => !v)}>
                                     <div className="grid gap-5 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
-                                        <div className="overflow-x-auto rounded-lg border border-[#2a2a2a]">
+                                        <div className="overflow-x-auto rounded-lg border border-[#30363d]">
                                             <table className="w-full text-left text-sm">
-                                                <thead className="bg-[#161616] text-xs text-[#d0d0d0]">
+                                                <thead className="bg-[#161b22] text-xs text-[#c9d1d9]">
                                                     <tr>
                                                         <th className="px-4 py-3 font-normal">Column</th>
                                                         <th className="px-4 py-3 text-right font-normal">Missing before</th>
@@ -659,10 +659,10 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                                 </thead>
                                                 <tbody>
                                                     {missingRows.length === 0 && (
-                                                        <tr className="border-t border-[#2a2a2a] bg-[#111111]"><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-500">No missing values found.</td></tr>
+                                                        <tr className="border-t border-[#30363d] bg-[#161b22]"><td colSpan={3} className="px-4 py-8 text-center text-sm text-gray-500">No missing values found.</td></tr>
                                                     )}
                                                     {missingRows.map((r) => (
-                                                        <tr key={r.name} className="border-t border-[#2a2a2a] bg-[#111111] text-[#e8e8e8]">
+                                                        <tr key={r.name} className="border-t border-[#30363d] bg-[#161b22] text-[#e6edf3]">
                                                             <td className="px-4 py-3 font-semibold">{r.name}</td>
                                                             <td className="px-4 py-3 text-right text-gray-400">{r.before === null ? "--" : `${r.before} (${fmt(r.beforePct)}%)`}</td>
                                                             <td className="px-4 py-3 text-right text-gray-400">{r.after === null ? "dropped" : r.after}</td>
@@ -672,14 +672,14 @@ export default function CleanData({ onNavigate, theme = "black", onSelectTheme }
                                             </table>
                                         </div>
 
-                                        <div className="overflow-x-auto rounded-lg border border-[#2a2a2a]">
+                                        <div className="overflow-x-auto rounded-lg border border-[#30363d]">
                                             <table className="w-full min-w-[480px] text-left text-xs">
-                                                <thead className="bg-[#161616] text-[#d0d0d0]">
+                                                <thead className="bg-[#161b22] text-[#c9d1d9]">
                                                     <tr>{(result.preview?.columns || []).map((c) => <th key={c} className="whitespace-nowrap px-3 py-3 font-normal">{c}</th>)}</tr>
                                                 </thead>
                                                 <tbody>
                                                     {(result.preview?.rows || []).map((row, i) => (
-                                                        <tr key={i} className="border-t border-[#2a2a2a] bg-[#111111] text-[#e8e8e8]">
+                                                        <tr key={i} className="border-t border-[#30363d] bg-[#161b22] text-[#e6edf3]">
                                                             {row.map((cell, j) => <td key={j} className="whitespace-nowrap px-3 py-2 text-gray-400">{cell === null ? "--" : typeof cell === "number" ? fmt(cell) : String(cell)}</td>)}
                                                         </tr>
                                                     ))}

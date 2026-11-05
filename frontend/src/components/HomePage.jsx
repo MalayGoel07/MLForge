@@ -35,7 +35,7 @@ export default function HomePage({ onNavigate, theme = "black", onSelectTheme })
   };
 
   return (
-    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none font-sans scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none font-sans scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
       {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-[#30363d] bg-[#161b22]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
@@ -54,7 +54,7 @@ export default function HomePage({ onNavigate, theme = "black", onSelectTheme })
         <section className="border-b border-[#30363d] pb-10">
           <div className="t-pill inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
             <span className="t-dot inline-block h-1.5 w-1.5 animate-pulse rounded-full"></span>
-            Multi-model ML workshop
+            Ai assisted ML workshop
           </div>
           <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
             Machine learning, all organized in one place.
@@ -67,7 +67,6 @@ export default function HomePage({ onNavigate, theme = "black", onSelectTheme })
         {/* Tools + quick actions */}
         <section className="grid gap-8 py-10 lg:grid-cols-[1fr_340px]">
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-black">Tools</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               {TOOLS.map((t) => (
                 <button

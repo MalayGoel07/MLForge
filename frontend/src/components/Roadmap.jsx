@@ -52,7 +52,7 @@ const roadmapSections = [
 export default function Roadmap({ onNavigate, theme = "black", onSelectTheme }) {
     const [openIndex, setOpenIndex] = useState(null);
 	return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-8 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-8 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#58a6ff] scroll-smooth">
             <div className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-10 flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-end">
                     <div>
@@ -71,21 +71,21 @@ export default function Roadmap({ onNavigate, theme = "black", onSelectTheme }) 
                     <div className="relative space-y-8">
                         {roadmapSections.map((section, index) => (
                             <div key={section.title} onClick={() => setOpenIndex(openIndex === index ? null : index)} className="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_64px_minmax(0,1fr)]">
-                                <div className="rounded-xl border border-[#2a2a2a] bg-[#111111] p-5 transition hover:border-[#5a5a5a] md:text-right">
+                                <div className="rounded-xl border border-[#30363d] bg-[#161b22] p-5 transition hover:border-[#388bfd] md:text-right">
                                     <p className="text-sm leading-7 text-gray-400">{section.topics.join("  /  ")}</p>
                                 </div>
                                 <div className="z-10 flex items-center justify-center">
-                                    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#8a8a8a] bg-[#161616] text-sm font-bold text-[#d0d0d0]">0{index + 1}</span>
+                                    <span className="flex h-12 w-12 items-center justify-center rounded-full border border-[#58a6ff] bg-[#161b22] text-sm font-bold text-[#c9d1d9]">0{index + 1}</span>
                                 </div>
-                                <div className="rounded-xl border border-[#2a2a2a] bg-[#000000] p-5 cursor-pointer transition hover:border-[#5a5a5a]" onClick={() => setOpenIndex(openIndex === index ? null : index)}>
-                                    <span className="text-xs uppercase tracking-[0.25em] text-[#8a8a8a]">Step 0{index + 1}</span>
-                                    <h2 className="mt-2 text-xl font-bold text-[#d0d0d0]">{section.title}</h2>
+                                <div className="rounded-xl border border-[#30363d] bg-[#0d1117] p-5 cursor-pointer transition hover:border-[#388bfd]" onClick={() => setOpenIndex(openIndex === index ? null : index)}>
+                                    <span className="text-xs uppercase tracking-[0.25em] text-[#58a6ff]">Step 0{index + 1}</span>
+                                    <h2 className="mt-2 text-xl font-bold text-[#c9d1d9]">{section.title}</h2>
                                 </div>
                                 {openIndex === index && (
-                                    <div className="col-span-3 mt-3 rounded-xl border border-[#2a2a2a] bg-[#111111] p-4">
+                                    <div className="col-span-3 mt-3 rounded-xl border border-[#30363d] bg-[#161b22] p-4">
                                         <p className="mb-2 text-xs text-gray-400">Resource link</p>
                                         {section.link ? (
-                                            <a href={section.link} target="_blank" rel="noopener noreferrer" className="text-sm text-[#8a8a8a] underline underline-offset-4 hover:text-[#d0d0d0]">{section.link}</a>
+                                            <a href={section.link} target="_blank" rel="noopener noreferrer" className="text-sm text-[#58a6ff] underline underline-offset-4 hover:text-[#c9d1d9]">{section.link}</a>
                                         ) : (
                                             <span className="text-sm text-gray-500 italic">Link coming soon...</span>
                                         )}
