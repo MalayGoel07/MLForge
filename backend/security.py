@@ -50,9 +50,8 @@ class UserInDB(User):
 
 
 class UserSignup(BaseModel):
-    username: str = Field(min_length=3, max_length=32, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=1, max_length=120)
     email: str
-    full_name: str | None = None
     password: str = Field(min_length=8, max_length=128)
 
 
@@ -92,10 +91,27 @@ def get_user(username: str) -> UserInDB | None:
     return None
 
 
+def get_user_by_email(email: str) -> UserInDB | None:
+    user = users_collection.find_one({"email": email})
+    if user:
+        return UserInDB(**user)
+    return None
+
+
 def authenticate_user(username: str, password: str):
     user = get_user(username)
     if not user:
         # Burn the same time as a real check so usernames can't be probed by timing.
+        verify_password(password, DUMMY_HASH)
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+
+def authenticate_user_by_email(email: str, password: str):
+    user = get_user_by_email(email)
+    if not user:
         verify_password(password, DUMMY_HASH)
         return False
     if not verify_password(password, user.hashed_password):

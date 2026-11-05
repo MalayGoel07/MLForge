@@ -512,7 +512,7 @@ export default function AIChat({ onNavigate }) {
                                     className="w-full rounded-md border border-[#30363d] bg-[#010409] px-3 py-1.5 text-xs text-[#c9d1d9] outline-none placeholder:text-[#6e7681] focus:border-[#388bfd]"
                                 />
                             </div>
-                            <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#7aa88a]">
+                            <nav className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#8a8a8a]">
                                 {isLoading && <p className="p-3 text-xs text-[#8b949e]">Loading chats...</p>}
                                 {!isLoading && filteredChats.length === 0 && <p className="p-3 text-xs text-[#8b949e]">No chats match your search.</p>}
                                 {(isLoading ? [] : filteredChats).map((chat) => {
@@ -599,7 +599,7 @@ export default function AIChat({ onNavigate }) {
                     )}
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+                    <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
                         <div className="flex flex-col gap-4">
                             {activeChat.messages.length === 0 && (
                                 <div className="rounded-md border border-[#30363d] bg-[#161b22] p-4 text-sm leading-6 text-[#8b949e]">

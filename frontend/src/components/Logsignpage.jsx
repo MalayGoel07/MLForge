@@ -4,25 +4,26 @@ import { setToken } from "../api/auth";
 import ThemeButton from "./ThemeButton";
 
 // Mirrors the backend rules in security.py (UserSignup)
-const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD = 8;
 
 const INPUT_CLASS =
-    "w-full rounded-lg border border-[#243724] bg-[#070a07] px-3 py-2 text-sm text-[#d4e6d5] outline-none transition placeholder:text-gray-600 focus:border-[#7aa88a] disabled:opacity-50";
-const LABEL_CLASS = "mb-1.5 block text-xs uppercase tracking-[0.2em] text-[#adc9ae]";
+    "w-full rounded-lg border border-[#2a2a2a] bg-[#050505] px-3 py-2 text-sm text-[#e8e8e8] outline-none transition placeholder:text-gray-600 focus:border-[#8a8a8a] disabled:opacity-50";
+const LABEL_CLASS = "mb-1.5 block text-xs uppercase tracking-[0.2em] text-[#d0d0d0]";
 
 const errorMessage = (err) => {
     const detail = err.response?.data?.detail;
     if (typeof detail === "string") return detail;
     if (Array.isArray(detail) && detail.length) return detail.map((d) => d.msg).join(". ");
-    if (!err.response) return "Can't reach the server. Is the backend running?";
+    if (err instanceof TypeError && /fetch|network|failed/i.test(err.message)) {
+        return "Can't reach the server. Is the backend running?";
+    }
     return err.message || "Something went wrong. Try again.";
 };
 
-export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTheme }) {
+export default function LoginSignPage({ onNavigate, theme = "black", onSelectTheme }) {
     const [mode, setMode] = useState("login");
-    const [form, setForm] = useState({ fullName: "", username: "", email: "", password: "", confirm: "" });
+    const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,12 +40,11 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
     };
 
     const validate = () => {
-        const username = form.username.trim();
         if (!isSignup) {
-            if (!username || !form.password) return "Enter your username and password.";
+            if (!EMAIL_RE.test(form.email.trim()) || !form.password) return "Enter your email and password.";
             return "";
         }
-        if (!USERNAME_RE.test(username)) return "Username must be 3 to 32 characters: letters, numbers, _ . or -";
+        if (!form.name.trim()) return "Enter your name.";
         if (!EMAIL_RE.test(form.email.trim())) return "Enter a valid email address.";
         if (form.password.length < MIN_PASSWORD) return `Password must be at least ${MIN_PASSWORD} characters.`;
         if (form.password !== form.confirm) return "Passwords don't match.";
@@ -64,16 +64,15 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
             let data;
             if (isSignup) {
                 ({ data } = await api.post("/auth/signup", {
-                    username: form.username.trim(),
+                    name: form.name.trim(),
                     email: form.email.trim(),
-                    full_name: form.fullName.trim() || null,
                     password: form.password,
                 }));
             } else {
                 // FastAPI's OAuth2PasswordRequestForm expects form-encoded fields, not JSON
                 ({ data } = await api.post(
                     "/auth/login",
-                    new URLSearchParams({ username: form.username.trim(), password: form.password }),
+                    new URLSearchParams({ username: form.email.trim(), password: form.password }),
                     { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
                 ));
             }
@@ -81,9 +80,9 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
             if (!token) {
                 throw new Error("No access token received from the server.");
             }
-            
+
             setToken(token);
-            
+
             // Navigate using your existing custom router.
             onNavigate("/home");
         } catch (err) {
@@ -94,9 +93,9 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
     };
 
     return (
-        <div className="t-page page-no-overscroll flex min-h-screen flex-col overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+        <div className="t-page page-no-overscroll flex min-h-screen flex-col overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
             <div className="flex justify-end">
-                <ThemeButton theme={theme} onSelect={onSelectTheme} />
+                <ThemeButton onNavigate={onNavigate} showSettings={false} />
             </div>
 
             <main className="flex flex-1 items-center justify-center py-8">
@@ -109,7 +108,7 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
                         </p>
                     </header>
 
-                    <div className="rounded-xl border border-[#243724] bg-[#0e140e]/80 p-6 shadow-2xl shadow-[#172617]/20">
+                    <div className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-6 shadow-2xl shadow-[#161616]/20">
                         <div className="mb-5 flex gap-2" role="group" aria-label="Choose login or sign up">
                             {[["login", "Log in"], ["signup", "Sign up"]].map(([key, label]) => (
                                 <button
@@ -117,7 +116,7 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
                                     type="button"
                                     aria-pressed={mode === key}
                                     onClick={() => switchMode(key)}
-                                    className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${mode === key ? "border-[#618c61] bg-[#172617] text-white" : "border-[#243724] bg-[#101a10] text-gray-400 hover:border-[#618c61]"}`}
+                                    className={`flex-1 rounded-lg border px-3 py-2 text-xs transition ${mode === key ? "border-[#5a5a5a] bg-[#161616] text-white" : "border-[#2a2a2a] bg-[#111111] text-gray-400 hover:border-[#5a5a5a]"}`}
                                 >
                                     {label}
                                 </button>
@@ -125,29 +124,22 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
                         </div>
 
                         <form onSubmit={handleSubmit} noValidate className="space-y-4">
-                            {isSignup && (
+                                {isSignup && (
                                 <div>
-                                    <label htmlFor="fullName" className={LABEL_CLASS}>Full name <span className="normal-case tracking-normal text-gray-600">(optional)</span></label>
-                                    <input id="fullName" type="text" autoComplete="name" value={form.fullName} onChange={setField("fullName")} disabled={isSubmitting} className={INPUT_CLASS} placeholder="Ada Lovelace" />
+                                    <label htmlFor="name" className={LABEL_CLASS}>Name</label>
+                                    <input id="name" type="text" autoComplete="name" value={form.name} onChange={setField("name")} disabled={isSubmitting} className={INPUT_CLASS} placeholder="Ada Lovelace" autoFocus />
                                 </div>
-                            )}
+                                )}
 
-                            <div>
-                                <label htmlFor="username" className={LABEL_CLASS}>Username</label>
-                                <input id="username" type="text" autoComplete="username" value={form.username} onChange={setField("username")} disabled={isSubmitting} className={INPUT_CLASS} placeholder="your_username" autoFocus />
-                            </div>
-
-                            {isSignup && (
                                 <div>
                                     <label htmlFor="email" className={LABEL_CLASS}>Email</label>
-                                    <input id="email" type="email" autoComplete="email" value={form.email} onChange={setField("email")} disabled={isSubmitting} className={INPUT_CLASS} placeholder="you@example.com" />
+                                    <input id="email" type="email" autoComplete="email" value={form.email} onChange={setField("email")} disabled={isSubmitting} className={INPUT_CLASS} placeholder="you@example.com" autoFocus={!isSignup} />
                                 </div>
-                            )}
 
                             <div>
                                 <div className="mb-1.5 flex items-center justify-between">
-                                    <label htmlFor="password" className="text-xs uppercase tracking-[0.2em] text-[#adc9ae]">Password</label>
-                                    <button type="button" onClick={() => setShowPassword((s) => !s)} className="text-[10px] text-gray-500 transition hover:text-[#adc9ae]">
+                                    <label htmlFor="password" className="text-xs uppercase tracking-[0.2em] text-[#d0d0d0]">Password</label>
+                                    <button type="button" onClick={() => setShowPassword((s) => !s)} className="text-[10px] text-gray-500 transition hover:text-[#d0d0d0]">
                                         {showPassword ? "Hide" : "Show"}
                                     </button>
                                 </div>
@@ -184,7 +176,7 @@ export default function LoginSignPage({ onNavigate, theme = "forest", onSelectTh
 
                     <p className="mt-4 text-center text-xs text-gray-500">
                         {isSignup ? "Already have an account? " : "New here? "}
-                        <button type="button" onClick={() => switchMode(isSignup ? "login" : "signup")} className="text-[#adc9ae] underline-offset-2 transition hover:underline">
+                        <button type="button" onClick={() => switchMode(isSignup ? "login" : "signup")} className="text-[#d0d0d0] underline-offset-2 transition hover:underline">
                             {isSignup ? "Log in" : "Create one"}
                         </button>
                     </p>

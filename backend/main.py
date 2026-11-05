@@ -25,12 +25,25 @@ if __package__ in (None, ""):
 from backend.db import chats_collection, users_collection
 from backend.ml.MlLogic import ml_router
 from backend.ml.clean_router import router as clean_router 
-from backend.security import ( Token, User, UserSignup, authenticate_user, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
+from backend.security import ( Token, User, UserSignup, authenticate_user_by_email, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
 
-frontend_url = os.getenv("frontend_url")
+frontend_urls = {
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+}
+for configured_url in os.getenv("FRONTEND_URLS", os.getenv("frontend_url", "")).split(","):
+    configured_url = configured_url.strip().rstrip("/")
+    if configured_url:
+        frontend_urls.add(configured_url)
 
 app = FastAPI(title="MlForge API", version="0.0.1")
-app.add_middleware(CORSMiddleware,allow_origins=["http://localhost:5173", "http://127.0.0.1:5173",frontend_url],allow_credentials=True,allow_methods=["*"],allow_headers=["*"],)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=sorted(frontend_urls),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(ml_router)
 app.include_router(clean_router) 
 client = Client(host="http://localhost:11434")
@@ -160,28 +173,29 @@ def get_models(current_user: ActiveUser):
 # ---------- auth ----------
 @app.post("/auth/login")
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user_by_email(form_data.username, form_data.password)
     if not user:
-        raise HTTPException(401, "Incorrect username or password")
+        raise HTTPException(401, "Incorrect email or password")
     token = create_access_token(data={"sub": user.username})
     return Token(access_token=token, token_type="bearer")
 
 
 @app.post("/auth/signup")
 def signup(user: UserSignup) -> Token:
+    email = user.email.strip().lower()
     try:
         users_collection.insert_one(
             {
-                "username": user.username,
-                "full_name": user.full_name,
-                "email": user.email,
+                "username": email,
+                "full_name": user.name.strip(),
+                "email": email,
                 "hashed_password": get_password_hash(user.password),
                 "disabled": False,
             }
         )
     except DuplicateKeyError:
-        raise HTTPException(400, "Username already exists")
-    token = create_access_token(data={"sub": user.username})
+        raise HTTPException(400, "An account with this email already exists")
+    token = create_access_token(data={"sub": email})
     return Token(access_token=token, token_type="bearer")
 
 
@@ -376,4 +390,9 @@ async def chat(current_user: ActiveUser,message: str = Form(""),history: str = F
     )
 
 if __name__ == "__main__":
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "backend.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "8000")),
+        reload=os.getenv("RELOAD", "true").lower() == "true",
+    )

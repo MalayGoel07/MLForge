@@ -91,19 +91,19 @@ const createRows = (rowCount, columnCount, dataType, missingRate, type, slope, c
 /* ------------------------------------------------------------------ */
 /*  Small UI pieces                                                    */
 /* ------------------------------------------------------------------ */
-const inputCls = "w-full rounded-lg border border-[#243724] bg-[#101a10] px-2 py-1.5 text-xs text-[#d4e6d5] focus:border-[#618c61] focus:outline-none";
+const inputCls = "w-full rounded-lg border border-[#2a2a2a] bg-[#111111] px-2 py-1.5 text-xs text-[#e8e8e8] focus:border-[#5a5a5a] focus:outline-none";
 
 function Collapse({ title, badge, open, onToggle, children }) {
     return (
-        <div className="rounded-lg border border-[#243724] bg-[#101a10]">
-            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#172617]">
+        <div className="rounded-lg border border-[#2a2a2a] bg-[#111111]">
+            <button type="button" aria-expanded={open} onClick={onToggle} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#161616]">
                 <span className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[#d4e6d5]">{title}</span>
-                    {badge && <span className="rounded-md bg-[#0e140e] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
+                    <span className="text-sm font-semibold text-[#e8e8e8]">{title}</span>
+                    {badge && <span className="rounded-md bg-[#000000] px-2 py-0.5 text-[10px] text-gray-400">{badge}</span>}
                 </span>
                 <span className={`text-sm text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
             </button>
-            {open && <div className="border-t border-[#243724] p-4">{children}</div>}
+            {open && <div className="border-t border-[#2a2a2a] p-4">{children}</div>}
         </div>
     );
 }
@@ -111,7 +111,7 @@ function Collapse({ title, badge, open, onToggle, children }) {
 function StepHeader({ n, title, sub }) {
     return (
         <div className="mb-4 flex items-start gap-3">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#618c61] bg-[#172617] text-xs font-bold text-[#d4e6d5]">{n}</span>
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#5a5a5a] bg-[#161616] text-xs font-bold text-[#e8e8e8]">{n}</span>
             <div>
                 <h2 className="text-lg font-bold leading-7">{title}</h2>
                 {sub && <p className="text-xs leading-5 text-gray-500">{sub}</p>}
@@ -146,8 +146,8 @@ function NumberField({ label, hint, value, onChange, min, max, step = 1 }) {
 function Slider({ label, value, onChange, hint }) {
     return (
         <label className="block text-[11px] text-gray-400">
-            <span className="flex justify-between"><span>{label}</span><span className="text-[#adc9ae]">{value}%</span></span>
-            <input type="range" min="0" max="30" value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-3 w-full accent-[#7aa88a]" />
+            <span className="flex justify-between"><span>{label}</span><span className="text-[#d0d0d0]">{value}%</span></span>
+            <input type="range" min="0" max="30" value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-3 w-full accent-[#8a8a8a]" />
             {hint && <span className="mt-1 block text-[10px] leading-4 text-gray-500">{hint}</span>}
         </label>
     );
@@ -156,7 +156,7 @@ function Slider({ label, value, onChange, hint }) {
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
-export default function CreateData({ onNavigate, theme = "forest", onSelectTheme }) {
+export default function CreateData({ onNavigate, theme = "black", onSelectTheme }) {
     const resultsRef = useRef(null);
 
     const [rowCount, setRowCount] = useState(12);
@@ -244,7 +244,7 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
     ];
 
     return (
-        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+        <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
             <section className="mx-auto max-w-5xl">
                 <header className="t-card-line mb-4 border-b pb-5">
                     <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
@@ -254,7 +254,7 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
                             <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-400">Describe the dataset you want, generate it, then download it for testing.</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <ThemeButton theme={theme} onSelect={onSelectTheme} />
+                            <ThemeButton onNavigate={onNavigate} />
                             <button onClick={() => onNavigate("/home")} className="no-underline rounded-lg border border-red-600 bg-red-600/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-600/30">Back</button>
                         </div>
                     </div>
@@ -262,7 +262,7 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
 
                 <div className="flex flex-col gap-5">
                     {/* ---------------- Step 1: configure ---------------- */}
-                    <section className="rounded-xl border border-[#243724] bg-[#0e140e]/80 p-5 shadow-2xl shadow-[#172617]/20">
+                    <section className="rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-5 shadow-2xl shadow-[#161616]/20">
                         <StepHeader n="1" title="Describe your dataset" sub="Open any section to change it. The defaults already work." />
 
                         <div className="space-y-2">
@@ -306,50 +306,50 @@ export default function CreateData({ onNavigate, theme = "forest", onSelectTheme
                             </Collapse>
                         </div>
 
-                        <div className="mt-4 rounded-lg border border-[#243724] bg-[#101a10] p-4">
-                            <p className="text-xs font-semibold text-[#adc9ae]">When you click Generate, we will:</p>
+                        <div className="mt-4 rounded-lg border border-[#2a2a2a] bg-[#111111] p-4">
+                            <p className="text-xs font-semibold text-[#d0d0d0]">When you click Generate, we will:</p>
                             <ul className="mt-2 space-y-1 text-xs leading-5 text-gray-400">
-                                {plan.map((t) => <li key={t} className="flex gap-2"><span className="text-[#7aa88a]">✓</span>{t}</li>)}
+                                {plan.map((t) => <li key={t} className="flex gap-2"><span className="text-[#8a8a8a]">✓</span>{t}</li>)}
                             </ul>
                             {dataType === "categorical" && type === "regression" && (
                                 <p className="mt-3 text-[11px] leading-5 text-[#d9b45a]">Categorical features have no numeric average, so the regression target will only be the constant plus noise.</p>
                             )}
                         </div>
 
-                        <button type="button" onClick={generateDataset} className="mt-5 w-full rounded-lg border border-green-400/60 bg-green-400/10 px-4 py-3 text-sm font-semibold text-white transition hover:border-green-300 hover:bg-green-300/20">{dataset ? (dirty ? "Generate again with these settings" : "Generate a fresh dataset") : "Generate dataset"}</button>
+                        <button type="button" onClick={generateDataset} className="mt-5 w-full rounded-lg border border-gray-400/60 bg-gray-400/10 px-4 py-3 text-sm font-semibold text-white transition hover:border-gray-300 hover:bg-gray-300/20">{dataset ? (dirty ? "Generate again with these settings" : "Generate a fresh dataset") : "Generate dataset"}</button>
                     </section>
 
                     {/* ---------------- Step 2: overview ---------------- */}
                     {dataset && (
-                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#243724] bg-[#101a10] p-5 shadow-2xl shadow-[#172617]/10">
+                        <section ref={resultsRef} className="scroll-mt-4 rounded-xl border border-[#2a2a2a] bg-[#111111] p-5 shadow-2xl shadow-[#161616]/10">
                             <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                                 <StepHeader n="2" title="Dataset overview" sub={`${dataset.rows.length} rows, ${dataset.headers.length} columns, ${dataset.type} features, ${dataset.type === "categorical" ? "" : ""}${taskInfoLabel(dataset.type, type)}`} />
-                                <button type="button" onClick={downloadDataset} className="shrink-0 rounded-lg border border-blue-400 bg-blue-400/10 px-4 py-2 text-sm font-semibold text-[#d4e6d5] transition hover:bg-blue-500">Download CSV</button>
+                                <button type="button" onClick={downloadDataset} className="shrink-0 rounded-lg border border-gray-400 bg-gray-400/10 px-4 py-2 text-sm font-semibold text-[#e8e8e8] transition hover:bg-gray-500">Download CSV</button>
                             </div>
 
                             {dirty && <p className="mb-4 rounded-lg border border-[#d9b45a]/40 bg-[#d9b45a]/10 p-3 text-xs text-[#d9b45a]">You changed the settings after this run. Click "Generate again" above to update this dataset.</p>}
 
                             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                                 {cards.map(([label, value]) => (
-                                    <div key={label} className="rounded-lg border border-[#243724] bg-[#0e140e] p-4">
+                                    <div key={label} className="rounded-lg border border-[#2a2a2a] bg-[#000000] p-4">
                                         <p className="text-xs text-gray-500">{label}</p>
-                                        <p className="mt-2 truncate text-2xl font-bold capitalize text-[#adc9ae]">{value}</p>
+                                        <p className="mt-2 truncate text-2xl font-bold capitalize text-[#d0d0d0]">{value}</p>
                                     </div>
                                 ))}
                             </div>
 
                             <div className="mt-4">
                                 <Collapse title="Preview rows" badge={`first ${Math.min(dataset.rows.length, 8)} of ${dataset.rows.length}`} open={showPreview} onToggle={() => setShowPreview((v) => !v)}>
-                                    <div className="overflow-x-auto rounded-lg border border-[#243724] bg-[#070a07]">
+                                    <div className="overflow-x-auto rounded-lg border border-[#2a2a2a] bg-[#050505]">
                                         <table className="w-full min-w-[520px] text-left text-sm">
-                                            <thead className="bg-[#101a10] text-xs uppercase tracking-widest text-[#adc9ae]">
+                                            <thead className="bg-[#111111] text-xs uppercase tracking-widest text-[#d0d0d0]">
                                                 <tr>{dataset.headers.map((header) => <th key={header} className="px-4 py-3 font-normal">{header}</th>)}</tr>
                                             </thead>
                                             <tbody>
                                                 {dataset.rows.slice(0, 8).map((row, rowIndex) => (
-                                                    <tr key={rowIndex} className="border-t border-[#243724] hover:bg-[#0e140e]">
+                                                    <tr key={rowIndex} className="border-t border-[#2a2a2a] hover:bg-[#000000]">
                                                         {row.map((value, columnIndex) => (
-                                                            <td key={`${rowIndex}-${columnIndex}`} className={`px-4 py-3 ${value === "" ? "text-[#7aa88a]" : "text-gray-300"}`}>{value === "" ? "null" : value}</td>
+                                                            <td key={`${rowIndex}-${columnIndex}`} className={`px-4 py-3 ${value === "" ? "text-[#8a8a8a]" : "text-gray-300"}`}>{value === "" ? "null" : value}</td>
                                                         ))}
                                                     </tr>
                                                 ))}

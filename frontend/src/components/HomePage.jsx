@@ -25,7 +25,7 @@ const QUICK = [
   { route: "/compiler", title: "Compiler", desc: "Write, compile and run code in a notebook.", icon: ICONS.compiler },
 ];
 
-export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }) {
+export default function HomePage({ onNavigate, theme = "black", onSelectTheme }) {
   const navigate = (route) => {
     if (typeof onNavigate === "function") onNavigate(route);
     else {
@@ -35,7 +35,7 @@ export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }
   };
 
   return (
-    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none font-sans scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+    <div className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none font-sans scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
       {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-[#30363d] bg-[#161b22]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
@@ -44,7 +44,7 @@ export default function HomePage({ onNavigate, theme = "forest", onSelectTheme }
             <span className="hidden rounded-full border border-[#30363d] px-2 py-0.5 text-[11px] text-[#8b949e] sm:inline">Workspace</span>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeButton theme={theme} onSelect={onSelectTheme} />
+            <ThemeButton onNavigate={onNavigate} />
           </div>
         </div>
       </header>

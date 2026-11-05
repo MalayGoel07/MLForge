@@ -10,6 +10,7 @@ import AiChat from "./components/AiChat";
 import TextCode from "./components/TextCode";
 import Logsignpage from "./components/Logsignpage";
 import CleanData from "./components/CleanData";
+import Setting from "./components/Setting";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 import { getToken } from "./api/auth";
 
@@ -24,6 +25,7 @@ const ROUTES = {
   "/compiler": Compiler,
   "/textcode": TextCode,
   "/cleandata": CleanData,
+  "/settings": Setting,
 };
 
 export default function App() {
@@ -32,6 +34,12 @@ export default function App() {
   const [theme, setTheme] = useState(() => loadTheme());
   const selectTheme = (id) => setTheme(id);
   useGlobalTheme(theme);
+  useEffect(() => {
+  const v = Number(localStorage.getItem("mlforge-font-scale"));
+  if (Number.isFinite(v) && v >= 0.9 && v <= 1.15) {
+    document.documentElement.style.setProperty("--font-scale", v);
+  }
+}, []);
 
   useEffect(() => {
     // Keep `path` in sync with the URL even if a component calls

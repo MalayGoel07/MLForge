@@ -18,7 +18,7 @@ A local ML workshop: upload a dataset, clean and analyse it, train and compare c
 
 Other details:
 - **Accounts:** signup and login with JWT. Every page except `/` and `/login` requires a token.
-- **Themes:** four global themes (Green, White, Black, Navy blue), saved in `localStorage`.
+- **Themes:** neutral White and Black themes, changed from the signed-in Settings page and saved in `localStorage`.
 
 ### AI assistant
 - Open it with the **Ask AI** button next to the theme button. It slides in from the right and takes at most 45% of the screen on desktop (full width on mobile). Esc closes it.
@@ -26,7 +26,7 @@ Other details:
 - Chat history is saved per user in MongoDB, with search, delete and clear-all.
 - Each reply has **Copy** and **Regenerate** buttons.
 - You can attach images and `.csv`, `.json`, `.txt` and `.md` files (up to 5 files, 10 MB each).
-- Open **Settings** in the AI panel to save a personal Gemini API key, set a persistent assistant instruction, or delete your account and saved chats. Personal keys are encrypted at rest with the server `SECRET_KEY`, used before the server-level `GEMINI_API_KEY`, and never returned by the API.
+- Open **Settings** from any signed-in page to change the theme, adjust font size, log out, or delete your account. AI settings remain in the AI panel. Personal keys are encrypted at rest with the server `SECRET_KEY`, used before the server-level `GEMINI_API_KEY`, and never returned by the API.
 
 ### Context AI
 Some pages can share what you are looking at with the assistant:
@@ -95,7 +95,24 @@ cd frontend
 npm install
 npm run dev
 ```
-Open the URL Vite prints (usually http://localhost:5173). The frontend talks to `http://localhost:8000`, and CORS in `backend/main.py` allows `localhost:5173` and `127.0.0.1:5173` only.
+Open the URL Vite prints (usually http://localhost:5173). Local development uses `frontend/.env.development` and talks to `http://localhost:8000`.
+
+### Render deployment
+
+For a Render static-site frontend, set the build command to `npm install && npm run build` in `frontend`, publish `frontend/dist`, and set:
+
+```text
+VITE_API_BASE_URL=https://mlforge-backend-dmqd.onrender.com
+```
+
+For the Render backend, use `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` from the repository root and set:
+
+```text
+FRONTEND_URLS=https://<your-render-frontend>.onrender.com
+RELOAD=false
+```
+
+The backend always allows the two local Vite origins and additionally allows every comma-separated URL in `FRONTEND_URLS`. Keep `VITE_API_BASE_URL` as a build-time frontend variable; do not put backend secrets in the frontend environment.
 
 ## API overview
 

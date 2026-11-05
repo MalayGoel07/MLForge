@@ -16,30 +16,7 @@
 /* ---------- Themes ----------
    --on-acc : readable text color on top of a solid --acc background
    --scroll : scrollbar thumb (separate so buttons can stay dark in snow) */
-:root,
-[data-theme="forest"] {
-  --page-bg: #0e140e;
-  --nav-bg: rgb(14 20 14 / 0.8);
-  --card-bg: #131e13;
-  --card-soft: #101a10;
-  --card-line: #243724;
-  --deep-bg: #070a07;
-  --raised-bg: #172617;
-  --acc: #adc9ae;
-  --acc-soft: #b6dbb7;
-  --acc-deep: #618c61;
-  --acc-thumb: #7aa88a;
-  --on-acc: #0e140e;
-  --scroll: #7aa88a;
-  --scroll-hover: #91cc92;
-  --text-soft: #d4e6d5;
-  --page-fg: #fff;
-  --tint: rgb(97 140 97 / 0.2);
-  --shadow: rgb(0 0 0 / 0.5);
-  color-scheme: dark;
-}
-
-/* Snow: pure neutrals, no green anywhere */
+/* Snow: pure neutrals */
 [data-theme="snow"] {
 --page-bg: #f1f0eb;
 --nav-bg: rgb(245 244 239 / 0.92);
@@ -62,6 +39,7 @@
 color-scheme: light;
 }
 
+:root,
 [data-theme="black"] {
   --page-bg: #000000;
   --nav-bg: rgb(0 0 0 / 0.85);
@@ -84,28 +62,6 @@ color-scheme: light;
   color-scheme: dark;
 }
 
-[data-theme="navy"] {
-  --page-bg: #0a1628;
-  --nav-bg: rgb(10 22 40 / 0.85);
-  --card-bg: #0d1d33;
-  --card-soft: #10243f;
-  --card-line: #1e3a5f;
-  --deep-bg: #071223;
-  --raised-bg: #16305a;
-  --acc: #8fb3ff;
-  --acc-soft: #b9ccff;
-  --acc-deep: #35507a;
-  --acc-thumb: #5b87c7;
-  --on-acc: #0a1628;
-  --scroll: #5b87c7;
-  --scroll-hover: #7fa3dc;
-  --text-soft: #d6e4ff;
-  --page-fg: #ffffff;
-  --tint: rgb(91 135 199 / 0.18);
-  --shadow: rgb(0 0 0 / 0.5);
-  color-scheme: dark;
-}
-
 /* ---------- Base ---------- */
 html,
 body,
@@ -124,6 +80,7 @@ body {
 html {
   scroll-behavior: smooth;
   background-color: var(--page-bg);
+  font-size: calc(100% * var(--font-scale, 1));
 }
 
 body {
@@ -145,14 +102,14 @@ body {
 /* ---------- Scrollbars: thin, thumb only, theme-aware ---------- */
 html,
 body,
-.green-thin-scroll,
+.neutral-thin-scroll,
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: var(--scroll) transparent;
 }
 
 ::-webkit-scrollbar,
-.green-thin-scroll::-webkit-scrollbar,
+.neutral-thin-scroll::-webkit-scrollbar,
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -161,20 +118,20 @@ body,
 
 ::-webkit-scrollbar-track,
 ::-webkit-scrollbar-corner,
-.green-thin-scroll::-webkit-scrollbar-track,
+.neutral-thin-scroll::-webkit-scrollbar-track,
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
 
 ::-webkit-scrollbar-thumb,
-.green-thin-scroll::-webkit-scrollbar-thumb,
+.neutral-thin-scroll::-webkit-scrollbar-thumb,
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background-color: var(--scroll);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover,
-.green-thin-scroll::-webkit-scrollbar-thumb:hover,
+.neutral-thin-scroll::-webkit-scrollbar-thumb:hover,
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: var(--scroll-hover);
 }
@@ -234,66 +191,66 @@ body,
 
 /* ---------- Legacy remap: hardcoded green classes follow the theme ----------
    Forest keeps the originals; the other themes are remapped. */
-:is([data-theme="snow"], [data-theme="black"], [data-theme="navy"]) {
+:is([data-theme="snow"], [data-theme="black"]) {
   /* solid backgrounds */
-  .bg-\[\#0e140e\]     { background-color: var(--card-bg); }
-  .bg-\[\#0e140e\]\/80 { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
-  .bg-\[\#101a10\]     { background-color: var(--card-soft); }
-  .bg-\[\#070a07\]     { background-color: var(--deep-bg); }
-  .bg-\[\#172617\]     { background-color: var(--raised-bg); }
-  .bg-\[\#618c61\],
-  .bg-\[\#7aa88a\]     { background-color: var(--acc-thumb); }
-  .bg-\[\#adc9ae\]     { background-color: var(--acc); color: var(--on-acc); }
+  .bg-\[\#000000\]     { background-color: var(--card-bg); }
+  .bg-\[\#000000\]\/80 { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
+  .bg-\[\#111111\]     { background-color: var(--card-soft); }
+  .bg-\[\#050505\]     { background-color: var(--deep-bg); }
+  .bg-\[\#161616\]     { background-color: var(--raised-bg); }
+  .bg-\[\#5a5a5a\],
+  .bg-\[\#8a8a8a\]     { background-color: var(--acc-thumb); }
+  .bg-\[\#d0d0d0\]     { background-color: var(--acc); color: var(--on-acc); }
 
   /* translucent green backgrounds / borders / shadows (catch-all) */
-  [class*="bg-[#618c61]/"],
-  [class*="bg-[#7aa88a]/"],
-  [class*="bg-[#adc9ae]/"] { background-color: var(--tint); }
-  [class*="bg-[#0e140e]/"],
-  [class*="bg-[#101a10]/"] { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
-  [class*="border-[#618c61]/"],
-  [class*="border-[#7aa88a]/"],
-  [class*="border-[#adc9ae]/"],
-  [class*="border-[#243724]/"] { border-color: var(--card-line); }
+  [class*="bg-[#5a5a5a]/"],
+  [class*="bg-[#8a8a8a]/"],
+  [class*="bg-[#d0d0d0]/"] { background-color: var(--tint); }
+  [class*="bg-[#000000]/"],
+  [class*="bg-[#111111]/"] { background-color: color-mix(in srgb, var(--card-bg) 80%, transparent); }
+  [class*="border-[#5a5a5a]/"],
+  [class*="border-[#8a8a8a]/"],
+  [class*="border-[#d0d0d0]/"],
+  [class*="border-[#2a2a2a]/"] { border-color: var(--card-line); }
   [class*="shadow-[#"] { --tw-shadow-color: var(--shadow); }
 
   /* borders */
-  .border-\[\#243724\] { border-color: var(--card-line); }
-  .border-\[\#618c61\],
-  .border-\[\#7aa88a\],
-  .border-\[\#adc9ae\] { border-color: var(--acc-thumb); }
+  .border-\[\#2a2a2a\] { border-color: var(--card-line); }
+  .border-\[\#5a5a5a\],
+  .border-\[\#8a8a8a\],
+  .border-\[\#d0d0d0\] { border-color: var(--acc-thumb); }
 
   /* text */
-  .text-\[\#adc9ae\]   { color: var(--acc); }
-  .text-\[\#b6dbb7\]   { color: var(--acc-soft); }
-  .text-\[\#d4e6d5\]   { color: var(--text-soft); }
-  .text-\[\#7aa88a\]   { color: var(--acc-thumb); }
-  .text-\[\#618c61\]   { color: var(--acc-deep); }
+  .text-\[\#d0d0d0\]   { color: var(--acc); }
+  .text-\[\#c9c9c9\]   { color: var(--acc-soft); }
+  .text-\[\#e8e8e8\]   { color: var(--text-soft); }
+  .text-\[\#8a8a8a\]   { color: var(--acc-thumb); }
+  .text-\[\#5a5a5a\]   { color: var(--acc-deep); }
 
   /* gradients */
-  .from-\[\#adc9ae\]   { --tw-gradient-from: var(--acc); }
-  .to-\[\#618c61\]     { --tw-gradient-to: var(--acc-deep); }
+  .from-\[\#d0d0d0\]   { --tw-gradient-from: var(--acc); }
+  .to-\[\#5a5a5a\]     { --tw-gradient-to: var(--acc-deep); }
 
   /* hover / focus: background AND text are set together so values never vanish */
-  .hover\:bg-\[\#adc9ae\]:hover,
-  .hover\:bg-\[\#adc9ae\]:hover * {
+  .hover\:bg-\[\#d0d0d0\]:hover,
+  .hover\:bg-\[\#d0d0d0\]:hover * {
     background-color: transparent;
     color: var(--on-acc);
   }
-  .hover\:bg-\[\#adc9ae\]:hover { background-color: var(--acc); }
+  .hover\:bg-\[\#d0d0d0\]:hover { background-color: var(--acc); }
 
-  .hover\:bg-\[\#618c61\]:hover,
-  .hover\:bg-\[\#7aa88a\]:hover { background-color: var(--acc-deep); color: var(--on-acc-deep, #fff); }
-  .hover\:bg-\[\#101a10\]:hover,
-  .hover\:bg-\[\#172617\]:hover { background-color: var(--raised-bg); }
+  .hover\:bg-\[\#5a5a5a\]:hover,
+  .hover\:bg-\[\#8a8a8a\]:hover { background-color: var(--acc-deep); color: var(--on-acc-deep, #fff); }
+  .hover\:bg-\[\#111111\]:hover,
+  .hover\:bg-\[\#161616\]:hover { background-color: var(--raised-bg); }
   .hover\:bg-white\/10:hover,
   .hover\:bg-white\/5:hover     { background-color: var(--tint); }
 
-  .hover\:text-\[\#b6dbb7\]:hover,
-  .hover\:text-\[\#adc9ae\]:hover { color: var(--acc); }
-  .hover\:border-\[\#7aa88a\]:hover,
-  .hover\:border-\[\#618c61\]:hover { border-color: var(--acc-thumb); }
-  .focus\:border-\[\#7aa88a\]:focus { border-color: var(--acc-thumb); }
+  .hover\:text-\[\#c9c9c9\]:hover,
+  .hover\:text-\[\#d0d0d0\]:hover { color: var(--acc); }
+  .hover\:border-\[\#8a8a8a\]:hover,
+  .hover\:border-\[\#5a5a5a\]:hover { border-color: var(--acc-thumb); }
+  .focus\:border-\[\#8a8a8a\]:focus { border-color: var(--acc-thumb); }
 }
 
 /* ---------- Snow readability ---------- */
@@ -301,7 +258,7 @@ body,
   /* dark text on light surfaces, but never on solid accent/button backgrounds */
   .text-white:not(
     .t-btn, .t-btn *, .t-accent-bg, .t-accent-bg *,
-    [class*="bg-[#618c61]"], [class*="bg-[#7aa88a]"], [class*="bg-[#adc9ae]"]
+    [class*="bg-[#5a5a5a]"], [class*="bg-[#8a8a8a]"], [class*="bg-[#d0d0d0]"]
   ) { color: #111111; }
   .text-gray-200 { color: #222222; }
   .text-gray-300 { color: #333333; }
@@ -310,4 +267,19 @@ body,
   .bg-black\/30  { background-color: rgb(0 0 0 / 0.05); }
   .border-white\/10,
   .border-white\/20 { border-color: rgb(0 0 0 / 0.12); }
+}
+
+/* Shared legacy dark-surface colors used by the workspace and AI panel. */
+[data-theme="snow"] {
+  .bg-\[\#161b22\] { background-color: var(--card-bg); }
+  .bg-\[\#1c2128\] { background-color: var(--raised-bg); }
+  .bg-\[\#21262d\] { background-color: var(--card-soft); }
+  .bg-\[\#30363d\] { background-color: var(--card-line); }
+  .bg-\[\#010409\] { background-color: var(--deep-bg); }
+  .border-\[\#30363d\] { border-color: var(--card-line); }
+  .text-\[\#8b949e\] { color: var(--acc-soft); }
+  .text-\[\#e6edf3\] { color: var(--page-fg); }
+  .text-\[\#c9d1d9\] { color: var(--text-soft); }
+  .hover\:bg-\[\#30363d\]:hover { background-color: var(--card-line); }
+  .hover\:bg-\[\#1c2128\]:hover { background-color: var(--raised-bg); }
 }

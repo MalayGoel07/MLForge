@@ -29,7 +29,7 @@ function highlight(line) {
   return out;
 }
 
-export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }) {
+export default function TextCode({ onNavigate, theme = "black", onSelectTheme }) {
   const [selectedId, setSelectedId] = useState(null); // nothing open at first
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState("code");
@@ -111,7 +111,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
     selected && setRevealed(Object.fromEntries(selected.qa.map((_, i) => [i, val])));
 
   return (
-    <main className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#7aa88a] scroll-smooth">
+    <main className="t-page page-no-overscroll min-h-screen overflow-x-clip overscroll-none px-4 py-4 font-mono md:px-8 scrollbar-thin scrollbar-thumb-[#8a8a8a] scroll-smooth">
       {/* header */}
       <header className="t-card-line mx-auto mb-4 max-w-[1600px] border-b pb-5">
         <p className="t-accent mb-2 text-xs uppercase tracking-[0.3em]">MlForge</p>
@@ -127,7 +127,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeButton theme={theme} onSelect={onSelectTheme} />
+            <ThemeButton onNavigate={onNavigate} />
             <button
               type="button"
               onClick={() => onNavigate("/home")}
@@ -142,7 +142,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
       <section className="mx-auto grid max-w-[1600px] grid-cols-1 gap-4 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)]">
         {/* ---------------- sidebar ---------------- */}
         <aside
-          className="flex min-w-0 flex-col rounded-xl border border-[#243724] bg-[#0e140e]/80 p-3 shadow-2xl shadow-[#172617]/20 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start"
+          className="flex min-w-0 flex-col rounded-xl border border-[#2a2a2a] bg-[#000000]/80 p-3 shadow-2xl shadow-[#161616]/20 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start"
           aria-label="Algorithm navigation"
         >
           <div className="relative mb-3 px-1">
@@ -151,12 +151,12 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search: pca, scraping, heatmap..."
-              className="w-full rounded-lg border border-[#243724] bg-[#070a07] px-3 py-2 text-xs text-[#d4e6d5] placeholder:text-gray-600 focus:border-[#7aa88a] focus:outline-none"
+              className="w-full rounded-lg border border-[#2a2a2a] bg-[#050505] px-3 py-2 text-xs text-[#e8e8e8] placeholder:text-gray-600 focus:border-[#8a8a8a] focus:outline-none"
               aria-label="Search snippets"
             />
           </div>
 
-          <div className="green-thin-scroll min-h-0 flex-1 overflow-y-auto pr-1 max-lg:max-h-[420px]">
+          <div className="neutral-thin-scroll min-h-0 flex-1 overflow-y-auto pr-1 max-lg:max-h-[420px]">
             {visibleGroups.length === 0 && (
               <p className="px-3 py-6 text-center text-xs text-gray-500">
                 Nothing matches "{query}".
@@ -169,18 +169,18 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                 <section className="mt-1" key={group.title}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs font-bold text-[#d4e6d5] transition hover:bg-[#172617]"
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs font-bold text-[#e8e8e8] transition hover:bg-[#161616]"
                     onClick={() =>
                       setExpanded((e) => ({ ...e, [group.title]: !e[group.title] }))
                     }
                     aria-expanded={open}
                   >
                     <span className="flex items-center gap-2.5">
-                      <span className="grid h-6 w-6 place-items-center rounded-md border border-[#243724] bg-[#101a10] text-sm text-[#adc9ae]">
+                      <span className="grid h-6 w-6 place-items-center rounded-md border border-[#2a2a2a] bg-[#111111] text-sm text-[#d0d0d0]">
                         {group.icon}
                       </span>
                       <span>{group.title}</span>
-                      <span className="grid h-[19px] min-w-5 place-items-center rounded-md bg-[#101a10] px-1 text-[10px] text-gray-400">
+                      <span className="grid h-[19px] min-w-5 place-items-center rounded-md bg-[#111111] px-1 text-[10px] text-gray-400">
                         {group.items.length}
                       </span>
                     </span>
@@ -205,14 +205,14 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                             aria-current={active ? "true" : undefined}
                             className={`flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-2 text-left text-xs leading-5 transition ${
                               active
-                                ? "border-[#618c61] bg-[#172617] text-[#d4e6d5]"
-                                : "border-transparent text-gray-400 hover:bg-[#101a10] hover:text-[#d4e6d5]"
+                                ? "border-[#5a5a5a] bg-[#161616] text-[#e8e8e8]"
+                                : "border-transparent text-gray-400 hover:bg-[#111111] hover:text-[#e8e8e8]"
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                                 active
-                                  ? "bg-[#7aa88a] ring-4 ring-[#7aa88a]/10"
+                                  ? "bg-[#8a8a8a] ring-4 ring-[#8a8a8a]/10"
                                   : "bg-gray-600"
                               }`}
                             />
@@ -227,8 +227,8 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
             })}
           </div>
 
-          <div className="mt-2 flex items-start gap-2.5 border-t border-[#243724] px-2 pt-3">
-            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#243724] text-xs text-[#adc9ae]">
+          <div className="mt-2 flex items-start gap-2.5 border-t border-[#2a2a2a] px-2 pt-3">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[#2a2a2a] text-xs text-[#d0d0d0]">
               ?
             </span>
             <p className="text-[10px] leading-4 text-gray-500">
@@ -240,16 +240,16 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
 
         {/* ---------------- main panel ---------------- */}
         <section
-          className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#243724] bg-[#0e140e]/80 shadow-2xl shadow-[#172617]/20"
+          className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-[#2a2a2a] bg-[#000000]/80 shadow-2xl shadow-[#161616]/20"
           aria-label="Selected snippet"
         >
           {!selected ? (
             <div className="grid min-h-[280px] flex-1 place-items-center p-8 text-center lg:min-h-[420px]">
               <div className="max-w-xs">
-                <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl border border-[#243724] bg-[#101a10] text-xs font-medium text-[#adc9ae]">
+                <span className="mx-auto grid h-10 w-10 place-items-center rounded-xl border border-[#2a2a2a] bg-[#111111] text-xs font-medium text-[#d0d0d0]">
                   Py
                 </span>
-                <h2 className="mt-4 text-sm font-bold text-[#d4e6d5]">No snippet open</h2>
+                <h2 className="mt-4 text-sm font-bold text-[#e8e8e8]">No snippet open</h2>
                 <p className="mt-2 text-xs leading-6 text-gray-500">
                   Open a group in the list and pick a snippet to see its code and self-test questions.
                 </p>
@@ -258,13 +258,13 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
           ) : (
             <>
               {/* title bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#243724] px-4 py-4 sm:px-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2a2a2a] px-4 py-4 sm:px-5">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#243724] bg-[#101a10] text-xs font-medium text-[#adc9ae]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#2a2a2a] bg-[#111111] text-xs font-medium text-[#d0d0d0]">
                     Py
                   </span>
                   <div className="min-w-0">
-                    <h2 className="truncate text-sm font-bold text-[#d4e6d5]">
+                    <h2 className="truncate text-sm font-bold text-[#e8e8e8]">
                       {selected.label}
                     </h2>
                     <p className="mt-1 text-[11px] text-gray-500">{selected.group}</p>
@@ -272,7 +272,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 rounded-lg border border-[#243724] bg-[#070a07]/50 p-1">
+                  <div className="flex items-center gap-1 rounded-lg border border-[#2a2a2a] bg-[#050505]/50 p-1">
                     {[
                       ["code", "Code"],
                       ["qa", `Self-test (${selected.qa.length})`],
@@ -283,8 +283,8 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                         onClick={() => setTab(key)}
                         className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${
                           tab === key
-                            ? "bg-[#172617] text-[#d4e6d5]"
-                            : "text-gray-400 hover:text-[#d4e6d5]"
+                            ? "bg-[#161616] text-[#e8e8e8]"
+                            : "text-gray-400 hover:text-[#e8e8e8]"
                         }`}
                       >
                         {label}
@@ -295,7 +295,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                     type="button"
                     onClick={closeSnippet}
                     aria-label="Close snippet"
-                    className="rounded-lg border border-[#243724] px-3 py-2 text-[11px] font-semibold text-gray-400 transition hover:border-[#618c61] hover:text-[#d4e6d5]"
+                    className="rounded-lg border border-[#2a2a2a] px-3 py-2 text-[11px] font-semibold text-gray-400 transition hover:border-[#5a5a5a] hover:text-[#e8e8e8]"
                   >
                     Close
                   </button>
@@ -303,7 +303,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
               </div>
 
               {/* install line */}
-              <div className="flex items-center justify-between gap-3 border-b border-[#243724] bg-[#070a07]/30 px-4 py-2.5 sm:px-5">
+              <div className="flex items-center justify-between gap-3 border-b border-[#2a2a2a] bg-[#050505]/30 px-4 py-2.5 sm:px-5">
                 <code className="min-w-0 truncate font-mono text-[11px] text-gray-400">
                   <span className="select-none text-gray-600">$ </span>
                   {selected.requires}
@@ -311,7 +311,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                 <button
                   type="button"
                   onClick={() => copy("install", selected.requires)}
-                  className="shrink-0 text-[10px] font-semibold text-gray-500 transition hover:text-[#adc9ae]"
+                  className="shrink-0 text-[10px] font-semibold text-gray-500 transition hover:text-[#d0d0d0]"
                 >
                   {copied === "install" ? "Copied" : "Copy"}
                 </button>
@@ -319,9 +319,9 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
 
               {tab === "code" ? (
                 <>
-                  <div className="flex items-center justify-between border-b border-[#243724] px-4 py-2.5 text-[10px] text-gray-500 sm:px-5">
-                    <span className="inline-flex items-center gap-2 text-[#d4e6d5]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#7aa88a]" />
+                  <div className="flex items-center justify-between border-b border-[#2a2a2a] px-4 py-2.5 text-[10px] text-gray-500 sm:px-5">
+                    <span className="inline-flex items-center gap-2 text-[#e8e8e8]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#8a8a8a]" />
                       Python
                       <span className="text-gray-600">{lines.length} lines</span>
                     </span>
@@ -330,8 +330,8 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                       onClick={() => copy("code", selected.code)}
                       className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition ${
                         copied === "code"
-                          ? "border-[#7aa88a] bg-[#172617] text-[#adc9ae]"
-                          : "border-[#618c61] bg-[#172617] text-[#d4e6d5] hover:bg-[#1f331f] hover:text-white"
+                          ? "border-[#8a8a8a] bg-[#161616] text-[#d0d0d0]"
+                          : "border-[#5a5a5a] bg-[#161616] text-[#e8e8e8] hover:bg-[#222222] hover:text-white"
                       }`}
                     >
                       <span aria-hidden="true">{copied === "code" ? "✓" : "▢"}</span>
@@ -339,8 +339,8 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                     </button>
                   </div>
 
-                  <div className="green-thin-scroll max-h-[640px] min-h-[360px] flex-1 overflow-auto bg-[#070a07] py-5">
-                    <pre className="m-0 font-mono text-xs leading-[1.9] text-[#d4e6d5]">
+                  <div className="neutral-thin-scroll max-h-[640px] min-h-[360px] flex-1 overflow-auto bg-[#050505] py-5">
+                    <pre className="m-0 font-mono text-xs leading-[1.9] text-[#e8e8e8]">
                       <code>
                         {lines.map((line, i) => (
                           <span
@@ -358,7 +358,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                   </div>
                 </>
               ) : (
-                <div className="green-thin-scroll min-h-[360px] flex-1 space-y-3 overflow-auto bg-[#070a07]/60 p-4 sm:p-5">
+                <div className="neutral-thin-scroll min-h-[360px] flex-1 space-y-3 overflow-auto bg-[#050505]/60 p-4 sm:p-5">
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-500">
                       Answer out loud first, then reveal.
@@ -366,7 +366,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                     <button
                       type="button"
                       onClick={() => setAll(!allShown)}
-                      className="rounded-lg border border-[#618c61] bg-[#172617] px-3 py-1.5 text-[11px] font-semibold text-[#d4e6d5] transition hover:bg-[#1f331f] hover:text-white"
+                      className="rounded-lg border border-[#5a5a5a] bg-[#161616] px-3 py-1.5 text-[11px] font-semibold text-[#e8e8e8] transition hover:bg-[#222222] hover:text-white"
                     >
                       {allShown ? "Hide all" : "Reveal all"}
                     </button>
@@ -375,20 +375,20 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                   {selected.qa.map((item, i) => (
                     <article
                       key={`${selected.id}-qa-${i}`}
-                      className="rounded-xl border border-[#243724] bg-[#101a10] p-4"
+                      className="rounded-xl border border-[#2a2a2a] bg-[#111111] p-4"
                     >
-                      <h3 className="text-sm font-semibold leading-6 text-[#d4e6d5]">
+                      <h3 className="text-sm font-semibold leading-6 text-[#e8e8e8]">
                         {item.q}
                       </h3>
                       {revealed[i] ? (
-                        <p className="mt-2 rounded-lg border border-[#7aa88a]/30 bg-[#172617] p-3 text-xs leading-6 text-[#d4e6d5]">
+                        <p className="mt-2 rounded-lg border border-[#8a8a8a]/30 bg-[#161616] p-3 text-xs leading-6 text-[#e8e8e8]">
                           {item.a}
                         </p>
                       ) : (
                         <button
                           type="button"
                           onClick={() => toggleReveal(i)}
-                          className="mt-2 rounded-lg border border-[#243724] px-3 py-1.5 text-[11px] font-semibold text-[#adc9ae] transition hover:bg-[#172617]"
+                          className="mt-2 rounded-lg border border-[#2a2a2a] px-3 py-1.5 text-[11px] font-semibold text-[#d0d0d0] transition hover:bg-[#161616]"
                         >
                           Show answer
                         </button>
@@ -399,11 +399,11 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
               )}
 
               {/* footer nav */}
-              <footer className="flex items-center justify-between gap-3 border-t border-[#243724] px-4 py-3 text-[11px] text-gray-500 sm:px-5">
+              <footer className="flex items-center justify-between gap-3 border-t border-[#2a2a2a] px-4 py-3 text-[11px] text-gray-500 sm:px-5">
                 <button
                   type="button"
                   onClick={() => go(-1)}
-                  className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
+                  className="rounded-lg border border-[#2a2a2a] px-3 py-1.5 text-[#e8e8e8] transition hover:border-[#5a5a5a] hover:text-white"
                 >
                   ← Previous
                 </button>
@@ -413,7 +413,7 @@ export default function TextCode({ onNavigate, theme = "forest", onSelectTheme }
                 <button
                   type="button"
                   onClick={() => go(1)}
-                  className="rounded-lg border border-[#243724] px-3 py-1.5 text-[#d4e6d5] transition hover:border-[#618c61] hover:text-white"
+                  className="rounded-lg border border-[#2a2a2a] px-3 py-1.5 text-[#e8e8e8] transition hover:border-[#5a5a5a] hover:text-white"
                 >
                   Next →
                 </button>
