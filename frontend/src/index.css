@@ -11,13 +11,14 @@
   --color-acc-deep: var(--acc-deep);
   --color-acc-thumb: var(--acc-thumb);
   --color-fg: var(--page-fg);
+  --color-tint: var(--tint);
 }
 
 /* ---------- Themes ----------
    --on-acc : readable text color on top of a solid --acc background
    --scroll : scrollbar thumb (separate so buttons can stay dark in snow) */
 /* Snow: pure neutrals */
-[data-theme="snow"] {
+:root[data-theme="snow"] {
 --page-bg: #f1f0eb;
 --nav-bg: rgb(245 244 239 / 0.92);
 --card-bg: #f9f8f4;

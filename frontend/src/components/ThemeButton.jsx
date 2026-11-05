@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useEffect } from "react";
 import AIButton from "./AIButton";
+import { aiPanel } from "./aiPanelStore";
 export const THEME_KEY = "mlforge-theme";
 
 export const THEMES = [
@@ -36,7 +37,7 @@ export default function ThemeButton({ onNavigate, className = "", showSettings =
       {showSettings && (
         <button
           type="button"
-          onClick={() => onNavigate("/settings")}
+          onClick={() => aiPanel.openSettingsPanel()}
           aria-label="Settings"
           title="Settings"
           className="inline-flex items-center gap-2 rounded-full border border-line bg-card-soft px-3 py-1.5 text-xs font-medium text-acc transition hover:opacity-80"

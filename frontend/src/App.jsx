@@ -12,6 +12,7 @@ import Logsignpage from "./components/Logsignpage";
 import CleanData from "./components/CleanData";
 import Setting from "./components/Setting";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
+import { useSettingsPanelOpen } from "./components/aiPanelStore";
 import { getToken } from "./api/auth";
 
 const PUBLIC_ROUTES = ["/", "/login"];
@@ -25,7 +26,6 @@ const ROUTES = {
   "/compiler": Compiler,
   "/textcode": TextCode,
   "/cleandata": CleanData,
-  "/settings": Setting,
 };
 
 export default function App() {
@@ -34,12 +34,21 @@ export default function App() {
   const [theme, setTheme] = useState(() => loadTheme());
   const selectTheme = (id) => setTheme(id);
   useGlobalTheme(theme);
+  const settingsOpen = useSettingsPanelOpen();
   useEffect(() => {
-  const v = Number(localStorage.getItem("mlforge-font-scale"));
-  if (Number.isFinite(v) && v >= 0.9 && v <= 1.15) {
-    document.documentElement.style.setProperty("--font-scale", v);
-  }
-}, []);
+    if (path === "/settings") {
+      import("./components/aiPanelStore").then(({ aiPanel }) => aiPanel.openSettingsPanel());
+      window.history.replaceState({}, "", "/");
+      setPath("/");
+      rerender();
+    }
+  }, [path]);
+  useEffect(() => {
+    const v = Number(localStorage.getItem("mlforge-font-scale"));
+    if (Number.isFinite(v) && v >= 0.9 && v <= 1.15) {
+      document.documentElement.style.setProperty("--font-scale", v);
+    }
+  }, []);
 
   useEffect(() => {
     // Keep `path` in sync with the URL even if a component calls
@@ -65,6 +74,10 @@ export default function App() {
   }, []);
 
   const navigate = (nextPath) => {
+    if (nextPath === "/settings") {
+      import("./components/aiPanelStore").then(({ aiPanel }) => aiPanel.openSettingsPanel());
+      return;
+    }
     if (nextPath !== window.location.pathname) {window.history.pushState({}, "", nextPath);}
     setPath(nextPath);
     rerender();
@@ -87,6 +100,7 @@ export default function App() {
     <>
       {page}
       {showAI && <AiChat onNavigate={navigate} />}
+      <Setting isOpen={settingsOpen} onClose={() => import("./components/aiPanelStore").then(({ aiPanel }) => aiPanel.closeSettingsPanel())} theme={theme} onSelectTheme={selectTheme} />
     </>
   );
 }
