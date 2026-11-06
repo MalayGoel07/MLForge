@@ -3,7 +3,6 @@ import HomePage from "./components/HomePage";
 import CBXLanding from "./components/LandingPage";
 import DataAnalyzer from "./components/DataAnalyzer";
 import CompareModel from "./components/CompareModel";
-import Roadmap from "./components/Roadmap";
 import CreateData from "./components/CreateData";
 import Compiler from "./components/Compiler";
 import AiChat from "./components/AiChat";
@@ -22,7 +21,6 @@ const ROUTES = {
   "/home": HomePage,
   "/analyze": DataAnalyzer,
   "/compare": CompareModel,
-  "/roadmap": Roadmap,
   "/createdata": CreateData,
   "/compiler": Compiler,
   "/textcode": TextCode,

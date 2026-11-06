@@ -28,9 +28,18 @@ from backend.ml.clean_router import router as clean_router
 from backend.ml.predict_router import router as predict_router
 from backend.security import ( Token, User, UserSignup, authenticate_user_by_email, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
 from backend.ml import model_store
+# Read frontend URL(s) from environment for CORS configuration
+# Support comma-separated list for multiple origins
 frontend_url = os.getenv("frontend_url", "").strip().rstrip("/")
+# Parse comma-separated origins, strip whitespace and trailing slits
 origins = [o.strip().rstrip("/") for o in frontend_url.split(",") if o.strip()]
-origins += ["http://localhost:5173", "http://localhost:3000"]  # local dev
+# Add local development origins for development
+origins += ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]
+# Add production Render URLs ensure CORS works across deployments
+production_origins = ["https://mlforge-a0h0.onrender.com", "https://mlforge-backend-dmqd.onrender.com"]
+for po in production_origins:
+    if po not in origins:
+        origins.append(po)
 
 app = FastAPI(title="MlForge API", version="0.0.1")
 app.add_middleware(
