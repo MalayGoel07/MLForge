@@ -2,6 +2,20 @@
 
 A local ML workshop: upload a dataset, clean and analyse it, train and compare classic ML models, run Python in an in-browser notebook, and ask a local AI assistant about your results. React + Vite frontend, FastAPI backend, MongoDB for accounts and chat history, Ollama for the AI. Built for demos, teaching and local experimentation. **Not production-ready** (see [Known limitations](#known-limitations)).
 
+## Recent Updates
+
+### v0.2.0 - Frontend Patch and New playground Feature (c7bae28)
+- **PredictionPlayground**: New dedicated component for training and comparing multiple models on a single dataset
+- **Settings page**: Updated UI and configuration options
+- **HomePage**: Improved layout and feature highlights
+- **Logsignpage**: Updated authentication flow
+- **Backend**: Enhanced ML logic, model store, and prediction routing
+
+### v0.1.1 - Added local model direct call (8dc1d73)
+- **AI Chat**: Improved local model integration with direct calling functionality
+- **Landing page**: Minor updates to showcase local model features
+- **Theme button**: Visual improvements and state management
+
 <!-- Add a screenshot of the Home page and one of Compare Models + the AI panel here -->
 
 ## Features
@@ -14,6 +28,7 @@ A local ML workshop: upload a dataset, clean and analyse it, train and compare c
 | Cleanse data | `/cleandata` | Handle missing values, duplicates and bad types |
 | ML Notebook | `/compiler` | Jupyter-style Python notebook that runs **in the browser** |
 | Library | `/textcode` | Browse written code for practice |
+| Playground | `/playground` | Test the trained models and check predictions |
 | AI assistant | (panel) | Right-side chat panel, available on every signed-in page |
 
 Other details:
@@ -41,6 +56,8 @@ Some pages can share what you are looking at with the assistant:
 
 ## Stack
 - **Frontend:** React, Vite, Tailwind CSS
+
+...
 - **Backend:** FastAPI, Uvicorn, scikit-learn, pandas, pymongo
 - **Database:** MongoDB (users and chats)
 - **AI:** [Ollama](https://ollama.com) running locally (`http://localhost:11434`)
@@ -97,22 +114,25 @@ npm run dev
 ```
 Open the URL Vite prints (usually http://localhost:5173). Local development uses `frontend/.env.development` and talks to `http://localhost:8000`.
 
-### Render deployment
+### Render deployment ✅ CONFIGURED
 
-For a Render static-site frontend, set the build command to `npm install && npm run build` in `frontend`, publish `frontend/dist`, and set:
+For a Render static-site frontend:
 
-```text
-VITE_API_BASE_URL=https://mlforge-backend-dmqd.onrender.com
-```
+1. Set the build command to `npm install && npm run build` in `frontend`
+2. Publish the `frontend/dist` directory
+3. Set the following environment variable in the Render dashboard:
+   - `VITE_API_BASE_URL=https://mlforge-backend-dmqd.onrender.com`
 
-For the Render backend, use `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` from the repository root and set:
+For the Render backend:
 
-```text
-FRONTEND_URLS=https://<your-render-frontend>.onrender.com
-RELOAD=false
-```
+1. Use `uvicorn backend.main:app --host 0.0.0.0 --port $PORT` as the start command
+2. Set the following environment variables in the Render dashboard:
+   - `FRONTEND_URLS=https://mlforge-a0h0.onrender.com`
+   - `RELOAD=false`
 
-The backend always allows the two local Vite origins and additionally allows every comma-separated URL in `FRONTEND_URLS`. Keep `VITE_API_BASE_URL` as a build-time frontend variable; do not put backend secrets in the frontend environment.
+The backend always allows the two local Vite origins (`http://localhost:5173` and `http://127.0.0.1:5173`) and additionally allows every comma-separated URL in `FRONTEND_URLS`. Keep `VITE_API_BASE_URL` as a build-time frontend variable; do not put backend secrets in the frontend environment.
+
+> **Note**: The backend stores data in MongoDB (not on disk) so runs survive restarts and redeploys, since Render's filesystem is ephemeral.
 
 ## API overview
 

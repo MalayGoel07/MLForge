@@ -28,19 +28,12 @@ from backend.ml.clean_router import router as clean_router
 from backend.ml.predict_router import router as predict_router
 from backend.security import ( Token, User, UserSignup, authenticate_user_by_email, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
 from backend.ml import model_store
-frontend_urls = {
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-}
-for configured_url in os.getenv("FRONTEND_URLS", os.getenv("frontend_url", "")).split(","):
-    configured_url = configured_url.strip().rstrip("/")
-    if configured_url:
-        frontend_urls.add(configured_url)
+frontend_urls = os.getenv("FRONTEND_URLS")
 
 app = FastAPI(title="MlForge API", version="0.0.1")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=sorted(frontend_urls),
+    allow_origins=frontend_urls,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

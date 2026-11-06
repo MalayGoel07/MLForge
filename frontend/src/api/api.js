@@ -1,10 +1,5 @@
 
-const API_BASE_URL = (
-    import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.DEV
-        ? "http://localhost:8000"
-        : "https://mlforge-backend-dmqd.onrender.com")
-  ).replace(/\/$/, "");
+const API_BASE_URL = "https://mlforge-backend-dmqd.onrender.com";
 
 import { getToken } from "./auth";
 
