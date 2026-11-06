@@ -645,12 +645,94 @@ export default function AIChat({ onNavigate }) {
     };
 
     const stopReply = () => abortRef.current?.abort();
+    const runLocalOllama = async ({ model, history, text, signal, onToken }) => {
+        const url = ollamaUrl.trim().replace(/\/+$/, "");
+
+        const response = await fetch(`${url}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal,
+            body: JSON.stringify({
+                model,
+                messages: [
+                    ...history,
+                    { role: "user", content: text }
+                ],
+                stream: true
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ollama HTTP ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+
+                const data = JSON.parse(line);
+                if (data.error) throw new Error(data.error);
+
+                const token = data.message?.content;
+                if (token) onToken(token);
+            }
+        }
+    };
 
     const runReply = async ({ chatId, text, history, files }) => {
         setError(""); setIsSending(true);
         const controller = new AbortController();
         abortRef.current = controller;
         try {
+            if (provider === "local") {
+                if (!selectedLocalModel) {
+                    throw new Error("Select a local Ollama model first.");
+                }
+            
+                updateChat(chatId, (c) => ({
+                    ...c,
+                    messages: [...c.messages, {
+                        role: "assistant",
+                        content: "",
+                        ts: Date.now()
+                    }],
+                }));
+            
+                let reply = "";
+            
+                await runLocalOllama({
+                    model: selectedLocalModel,
+                    history,
+                    text,
+                    signal: controller.signal,
+                    onToken: (token) => {
+                        reply += token;
+                    
+                        updateChat(chatId, (c) => ({
+                            ...c,
+                            messages: c.messages.map((m, i) =>
+                                i === c.messages.length - 1
+                                    ? { ...m, content: reply }
+                                    : m
+                            ),
+                            updatedAt: Date.now()
+                        }));
+                    }
+                });
+            
+                return;
+            }
             const baseURL = (api.defaults?.baseURL || "http://localhost:8000").replace(/\/$/, "");
             const form = new FormData();
             form.append("message", text);
