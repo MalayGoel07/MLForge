@@ -25,8 +25,9 @@ if __package__ in (None, ""):
 from backend.db import chats_collection, users_collection
 from backend.ml.MlLogic import ml_router
 from backend.ml.clean_router import router as clean_router 
+from backend.ml.predict_router import router as predict_router
 from backend.security import ( Token, User, UserSignup, authenticate_user_by_email, create_access_token, decrypt_api_key, encrypt_api_key, get_current_active_user, get_password_hash,)
-
+from backend.ml import model_store
 frontend_urls = {
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 app.include_router(ml_router)
 app.include_router(clean_router) 
+app.include_router(predict_router) 
 client = Client(host="http://localhost:11434")
 
 M_CODER = os.getenv("model")
@@ -230,6 +232,7 @@ def update_me(data: ProfileUpdate, current_user: ActiveUser):
 @app.delete("/me")
 def delete_me(current_user: ActiveUser):
     chats_collection.delete_many({"owner": current_user.username})
+    model_store.delete_user_runs(current_user.username)
     result = users_collection.delete_one({"username": current_user.username})
     if result.deleted_count != 1:
         raise HTTPException(404, "Account not found")

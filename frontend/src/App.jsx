@@ -11,6 +11,7 @@ import TextCode from "./components/TextCode";
 import Logsignpage from "./components/Logsignpage";
 import CleanData from "./components/CleanData";
 import Setting from "./components/Setting";
+import PredictionPlayground from "./components/PredictionPlayground";
 import { loadTheme, useGlobalTheme } from "./components/ThemeButton";
 import { useSettingsPanelOpen } from "./components/aiPanelStore";
 import { getToken } from "./api/auth";
@@ -26,6 +27,7 @@ const ROUTES = {
   "/compiler": Compiler,
   "/textcode": TextCode,
   "/cleandata": CleanData,
+  "/playground": PredictionPlayground,
 };
 
 export default function App() {

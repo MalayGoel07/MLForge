@@ -3,12 +3,15 @@ import json
 import sys
 from pathlib import Path
 import pandas as pd
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile,Depends
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (MinMaxScaler,OneHotEncoder,RobustScaler,StandardScaler,)
+from backend.ml import model_store
+from backend.security import User, get_current_active_user
+from typing import Annotated
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -98,7 +101,7 @@ def build_preprocessor(X: pd.DataFrame,needs_scaling: bool,scaling_technique: st
 
 
 @ml_router.post("/train")
-async def train_models(file: UploadFile = File(...),target_column: str = Form(""),task_type: str = Form(...),models: str = Form(...),scaling_technique: str = Form("standard"),):
+async def train_models(current_user: Annotated[User, Depends(get_current_active_user)],file: UploadFile = File(...),target_column: str = Form(""),task_type: str = Form(...),models: str = Form(...),scaling_technique: str = Form("standard"),):
 
     if scaling_technique not in {"none",*SCALER_FACTORIES,}:
         raise HTTPException(status_code=400,detail=("scaling_technique must be one of: ""standard, minmax, robust, none"),)
@@ -123,6 +126,7 @@ async def train_models(file: UploadFile = File(...),target_column: str = Form(""
         raise HTTPException(status_code=400,detail=(f"Target column '{target_column}' ""was not found"),)
 
     X = dataset.drop(columns=[target_column])
+    X = model_store.prepare_features(X)
     y = dataset[target_column].copy()
 
     if task_type == "classification":
@@ -144,6 +148,7 @@ async def train_models(file: UploadFile = File(...),target_column: str = Form(""
     else:
         X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=42,)
     results = {}
+    pipelines = {}
     for name in model_names:
         try:
             if name not in MODEL_REGISTRY:
@@ -158,16 +163,21 @@ async def train_models(file: UploadFile = File(...),target_column: str = Form(""
             pipeline = Pipeline(steps=[("preprocessor",preprocessor,),("model",model,),])
 
             pipeline.fit(X_train,y_train,)
+            pipelines[name] = pipeline
             predictions = pipeline.predict(X_test)
             metrics = compute_metrics(task_type,y_test,predictions,)
             results[name] = {"metrics": metrics,"test_samples": len(y_test),}
 
         except Exception as exc:
             results[name] = {"error": str(exc)}
+    run_id = None
+    if pipelines:
+        run_id = model_store.save_run(current_user.username, pipelines, X_train, task=task_type, target=target_column,dataset_name=file.filename or "", metrics={n: r["metrics"] for n, r in results.items() if "metrics" in r},)
     return {
         "results": results,
         "train_samples": len(y_train),
         "test_samples": len(y_test),
         "features": X.shape[1],
         "task_type": task_type,
+        "run_id": run_id,
     }
